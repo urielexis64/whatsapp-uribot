@@ -273,7 +273,7 @@ module.exports = msgHandler = async (client, message) => {
 									from,
 									`${res.urlHd}`,
 									"video.mp4",
-									"Done!",
+									res.capt,
 									id
 								);
 							else
@@ -281,7 +281,7 @@ module.exports = msgHandler = async (client, message) => {
 									from,
 									`${res.url}`,
 									"video.mp4",
-									"Done!",
+									res.capt,
 									id
 								);
 						});
