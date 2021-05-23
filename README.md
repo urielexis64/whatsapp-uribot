@@ -1,32 +1,6 @@
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap');
-
-*{font-family: Poppins, sans-serif;}
-
-#header-container{
-     text-align: center;
-     margin: 20px 0 30px 0;
-}
-
-h1{
-    border-radius: 100px;
-    text-shadow: 0 4px 2px black;
-    padding: 12px 36px;
-    color: white;
-    background: linear-gradient(black, transparent);
-    text-transform: uppercase;
-    font-weight: bold;
-    display: inline;
-    transition: 1s;
-}
-
-h1:hover{
-    transform: translateY(-5px);
-}
-
-</style>
-
-<div id="header-container"><h1>🤖 UriBOT 🤖</h1></div>
+<p align="center">
+<a href="#"><img width="200px" title="🤖 UriBOT 🤖" src="https://img.shields.io/badge/🤖 UriBOT 🤖-blue?colorA=darkblue&colorB=darkblue&style=for-the-badge"></a>
+</p>
 
 <p align="center">
 <a href="https://github.com/urielexis64"><img title="Author" src="https://img.shields.io/badge/Autor-urielexis64-blue.svg?style=for-the-badge&logo=github"></a>
