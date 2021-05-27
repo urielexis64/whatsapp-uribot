@@ -1,27 +1,47 @@
-const ytdl = require("ytdl-core");
-const youtube = require("scrape-youtube").default;
 const tiktok = require("tiktok-scraper");
-const Porn = require("porn-lib");
-const porn = new Porn();
-const xvideos = porn.engine("xvideos");
+const html_to_pdf = require("html-pdf-node");
 const {decryptMedia} = require("@open-wa/wa-decrypt");
 const fs = require("fs");
 const axios = require("axios");
 const moment = require("moment-timezone");
 const get = require("got");
 const fetch = require("node-fetch");
-const color = require("./lib/color");
+const color = require("../lib/color");
 const gtts = require("node-gtts");
-const {cheemsify, random, fb, changelog} = require("./lib/functions");
-const {help, terms, info, donate, readme} = require("./lib/help");
-const nsfw_ = JSON.parse(fs.readFileSync("./lib/NSFW.json"));
-const welcome = JSON.parse(fs.readFileSync("./lib/welcome.json"));
+const ttsId = gtts("id");
+const ttsEn = gtts("en");
+const ttsJp = gtts("ja");
+const ttsAr = gtts("ar");
+const ttsEs = gtts("es");
+
+const {cheemsify, random, changelog, songLyrics, translate, sleep} = require("../lib/functions");
+const {help, terms, info, donate, readme} = require("../lib/help");
+const nsfw_ = JSON.parse(fs.readFileSync("database/group/nsfw.json"));
+const welcome = JSON.parse(fs.readFileSync("database/group/welcome.json"));
 const Insta = require("scraper-instagram");
 const InstaClient = new Insta();
 
 moment.tz.setDefault("America/Mexico").locale("mx");
 
-module.exports = msgHandler = async (client, message) => {
+const {fb, ig, ytmp3, ytmp4, play, xvid} = require("../lib/downloader");
+const {Client} = require("@open-wa/wa-automate");
+
+const availableLanguages = [
+	"en-US",
+	"en-GB",
+	"de-DE",
+	"fr-FR",
+	"es-ES",
+	"pt-BR",
+	"it-IT",
+	"nl-NL",
+	"pl-PL",
+	"ru-RU",
+	"ja-JA",
+	"zh-ZH",
+];
+
+module.exports = uribot = async (client = new Client(), message) => {
 	try {
 		const {
 			type,
@@ -46,7 +66,7 @@ module.exports = msgHandler = async (client, message) => {
 		const command = commands.toLowerCase().split(" ")[0] || "";
 		const args = commands.split(" ");
 
-		if (!command.startsWith("/") || command === "") return;
+		if (!command.startsWith("/") || command.startsWith("/9j") || command === "") return;
 
 		const msgs = (message) => {
 			if (command.startsWith("/")) {
@@ -94,7 +114,7 @@ module.exports = msgHandler = async (client, message) => {
 		const isUrl = new RegExp(
 			/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&/=]*)/gi
 		);
-		if (!isGroupMsg && command.startsWith("!"))
+		if (!isGroupMsg && command.startsWith("/"))
 			console.log(
 				"\x1b[1;31m~\x1b[1;37m>",
 				"[\x1b[1;32mEXEC\x1b[1;37m]",
@@ -104,7 +124,7 @@ module.exports = msgHandler = async (client, message) => {
 				"from",
 				color(pushname)
 			);
-		if (isGroupMsg && command.startsWith("!"))
+		if (isGroupMsg && command.startsWith("/"))
 			console.log(
 				"\x1b[1;31m~\x1b[1;37m>",
 				"[\x1b[1;32mEXEC\x1b[1;37m]",
@@ -118,39 +138,41 @@ module.exports = msgHandler = async (client, message) => {
 		if (isBlocked) return;
 		switch (command) {
 			case "/test":
-				return client.reply(from, "*En línea. ✅*", id);
+				return client.reply(chat.id, "*En línea. ✅*", id);
+			case "/clear":
+				client.clearChat(chat.id);
+				break;
 			case "/xvid":
 				if (args.length === 1)
-					return client.reply(from, "Uso correcto: */xvid [término de búsqueda]*");
+					return client.reply(chat.id, "Uso correcto: */xvid [término de búsqueda]*");
 
-				client.reply(from, mess.wait, id);
-				const res = await xvideos.search({keywords: [args[1]], page: 0});
-
-				client.sendFileFromUrl(from, res[0].video_direct_url.low, args[1], args[1], id);
-				break;
+				const keyword = args[1];
+				return xvid(keyword).then((videoUrl) =>
+					client.sendFileFromUrl(chat.id, videoUrl, keyword, keyword, id)
+				);
 			case "/sticker":
 			case "/stiker":
 				if (isMedia && type === "image") {
 					const mediaData = await decryptMedia(message, uaOverride);
 					const imageBase64 = `data:${mimetype};base64,${mediaData.toString("base64")}`;
-					await client.sendImageAsSticker(from, imageBase64, stickersMetadata);
+					await client.sendImageAsSticker(chat.id, imageBase64, stickersMetadata);
 				} else if (quotedMsg && quotedMsg.type === "image") {
 					const mediaData = await decryptMedia(quotedMsg, uaOverride);
 					const imageBase64 = `data:${quotedMsg.mimetype};base64,${mediaData.toString(
 						"base64"
 					)}`;
-					await client.sendImageAsSticker(from, imageBase64, stickersMetadata);
+					await client.sendImageAsSticker(chat.id, imageBase64, stickersMetadata);
 				} else if (args.length === 2) {
 					const url = args[1];
 					if (url.match(isUrl)) {
 						await client
-							.sendStickerfromUrl(from, url, {method: "get"}, stickersMetadata)
+							.sendStickerfromUrl(chat.id, url, {method: "get"}, stickersMetadata)
 							.catch((err) => console.log("Caught exception: ", err));
 					} else {
-						client.reply(from, mess.error.Iv, id);
+						client.reply(chat.id, mess.error.Iv, id);
 					}
 				} else {
-					client.reply(from, mess.error.St, id);
+					client.reply(chat.id, mess.error.St, id);
 				}
 				break;
 			case "/stickergif":
@@ -167,7 +189,7 @@ module.exports = msgHandler = async (client, message) => {
 						try {
 							await fs.writeFileSync(filename, mediaData);
 							client.sendMp4AsSticker(
-								from,
+								chat.id,
 								filename,
 								{
 									crop: false,
@@ -178,14 +200,14 @@ module.exports = msgHandler = async (client, message) => {
 							);
 						} catch (error) {
 							client.reply(
-								from,
+								chat.id,
 								"El tamaño del video es muy extenso.\nMáximo peso para videos: *1.5 MB*",
 								id
 							);
 						}
 					} else
 						client.reply(
-							from,
+							chat.id,
 							"[❗] El video/GIF debe durar menos de 10 segundos.",
 							id
 						);
@@ -194,116 +216,97 @@ module.exports = msgHandler = async (client, message) => {
 			case "/tts":
 				if (args.length === 1) {
 					return client.reply(
-						from,
+						chat.id,
 						"Enviar comando */tts [es, en, jp, ar, id] [texto]*\nPor ejemplo */tts es Hola, soy UriBot, mucho gusto.*",
 						id
 					);
 				}
-
-				const ttsId = gtts("id");
-				const ttsEn = gtts("en");
-				const ttsJp = gtts("ja");
-				const ttsAr = gtts("ar");
-				const ttsEs = gtts("es");
 				const dataText = body.slice(8);
-				if (dataText === "") return client.reply(from, "Te faltó el texto.", id);
+				if (dataText === "") return client.reply(chat.id, "Te faltó el texto.", id);
 				if (dataText.length > 500)
-					return client.reply(from, "¡El texto es demasiado largo!", id);
+					return client.reply(chat.id, "¡El texto es demasiado largo!", id);
 				let dataBhs = body.slice(5, 7);
 				if (dataBhs === "id") {
 					ttsId.save("./media/tts/resId.mp3", dataText, function () {
-						client.sendPtt(from, "./media/tts/resId.mp3", id);
+						client.sendPtt(chat.id, "./media/tts/resId.mp3", id);
 					});
 				} else if (dataBhs === "en") {
 					ttsEn.save("./media/tts/resEn.mp3", dataText, function () {
-						client.sendPtt(from, "./media/tts/resEn.mp3", id);
+						client.sendPtt(chat.id, "./media/tts/resEn.mp3", id);
 					});
 				} else if (dataBhs === "jp") {
 					ttsJp.save("./media/tts/resJp.mp3", dataText, function () {
-						client.sendPtt(from, "./media/tts/resJp.mp3", id);
+						client.sendPtt(chat.id, "./media/tts/resJp.mp3", id);
 					});
 				} else if (dataBhs === "ar") {
 					ttsAr.save("./media/tts/resAr.mp3", dataText, function () {
-						client.sendPtt(from, "./media/tts/resAr.mp3", id);
+						client.sendPtt(chat.id, "./media/tts/resAr.mp3", id);
 					});
 				} else if (dataBhs === "es") {
 					ttsEs.save("./media/tts/resEs.mp3", dataText, function () {
-						client.sendPtt(from, "./media/tts/resEs.mp3", id);
+						client.sendPtt(chat.id, "./media/tts/resEs.mp3", id);
 					});
 				} else {
 					client.reply(
-						from,
+						chat.id,
 						"Ingrese los datos del idioma: [es] para español, [en] para inglés, [jp] para japonés, [ar] para árabe y [id] para indonesio. ",
 						id
 					);
 				}
 				break;
 			case "/ytmp3":
-				client.reply(from, "[ESPERA] Estoy descargando el audio. Sé paciente.", id);
+				client.reply(chat.id, "[ESPERA] Estoy descargando el audio. Sé paciente.", id);
 				const youtubeUrl = args[1];
-				let videoInfo = await ytdl.getInfo(youtubeUrl);
-
-				ytdl(youtubeUrl, {filter: "audioonly"})
-					.pipe(fs.createWriteStream("audio.mp3"))
-					.on("finish", () => {
-						client.sendFile(
-							from,
-							"audio.mp3",
-							videoInfo.videoDetails.title,
-							videoInfo.videoDetails.title,
-							id
-						);
-					})
-					.on("error", (error) => {
-						client.reply(from, "Ocurrió un error: " + error, id);
-					});
-				break;
+				return ytmp3(youtubeUrl)
+					.then((title) =>
+						client.sendFile(chat.id, `temp/audio/${title}.mp3`, title, title, id)
+					)
+					.catch((err) => client.reply(chat.id, `Ocurrió un error: ${err}`, id));
 			case "/ytmp4":
 				if (args.length === 1)
-					return client.reply(from, "El uso correcto es: */ytmp4 [youtubeLink]*", id);
+					return client.reply(chat.id, "El uso correcto es: */ytmp4 [youtubeLink]*", id);
+				client.reply(chat.id, "[ESPERA] Estoy descargando el video. Sé paciente.", id);
 
-				client.reply(from, "[ESPERA] Estoy descargando el video. Sé paciente.", id);
-
-				if (!args[1].match(isUrl)) {
-					youtube.search(body.slice(6)).then((results) => {
-						if (results.videos[0].duration > 600)
-							return client.reply(from, "*¡Video demasiado largo! Máx. 10 min.*", id);
-						ytdl(results.videos[0].link)
-							.pipe(fs.createWriteStream("video.mp4"))
-							.on("finish", () => {
-								client.sendFile(from, "video.mp4", body.slice(6), null, id);
-							})
-							.on("error", (error) => {
-								client.reply(from, "Ocurrió un error: " + error, id);
-							});
-					});
-					break;
-				}
-				ytdl(args[1])
-					.pipe(fs.createWriteStream("video.mp4"))
-					.on("finish", () => {
-						console.log("Video descargado!");
-						client.sendFile(from, "video.mp4", "video.mp4", null, id);
-					})
-					.on("error", (err) => {
-						client.reply(from, "Enlace inválido.", id);
-					});
-				break;
+				const isYtUrl = args[1].match(isUrl);
+				const value = isYtUrl ? args[1] : body.slice(7);
+				return ytmp4(isYtUrl, value)
+					.then((title) =>
+						client.sendFile(
+							chat.id,
+							`temp/video/${title}.mp4`,
+							`${title}.mp4`,
+							title,
+							id
+						)
+					)
+					.catch((err) => client.reply(chat.id, `Ocurrió un error: ${err}`, id));
 			case "/play":
 			case "/p":
-				client.reply(from, "*[ESPERA]* Estoy descargando el audio. Sé paciente. 😉", id);
-				youtube.search(args[0] === "/p" ? body.slice(2) : body.slice(5)).then((results) => {
-					ytdl(results.videos[0].link, {
-						filter: "audioonly",
-					})
-						.pipe(fs.createWriteStream("audio.mp3"))
-						.on("finish", () => {
-							client.sendFile(from, "audio.mp3", "audio", null, id, false, true);
-						})
-						.on("error", (error) => {
-							client.reply(from, "Ocurrió un error: " + error, id);
-						});
-				});
+				client.reply(chat.id, "*[ESPERA]* Estoy descargando el audio. Sé paciente. 😉", id);
+				return play(args[0] === "/p" ? body.slice(2) : body.slice(5))
+					.then((title) =>
+						client.sendFile(
+							chat.id,
+							`temp/audio/${title}.mp3`,
+							title,
+							title,
+							id,
+							null,
+							true,
+							false,
+							true
+						)
+					)
+					.catch((err) => client.reply(chat.id, err, id));
+			case "/lyrics":
+				if (args.length === 1)
+					return client.reply(
+						chat.id,
+						"Uso correcto: */lyrics [songLyric]*\nEj. /lyrics lalala",
+						id
+					);
+				client.reply(chat.id, "*Buscando letra...*", id);
+				return client.reply(chat.id, await songLyrics(body.slice(8)), id);
 			case "/ph":
 				/* const res = await ph.search(args[1], null, null);
 				const phUrl = await ph.page(
@@ -311,22 +314,52 @@ module.exports = msgHandler = async (client, message) => {
 					["title", "pornstars", "download_urls"]
 				);
 				console.log(phUrl); */
-				//client.sendFileFromUrl(from, phUrl.download_urls["480"], "si");
+				//client.sendFileFromUrl(chat.id, phUrl.download_urls["480"], "si");
 				break;
 			case "/write":
-				return client.sendText(from, body.slice(6));
+				return client.sendText(chat.id, `*${body.slice(6)}*`);
+			case "/translate":
+				if (args.length === 1 && !quotedMsg)
+					return client.reply(
+						chat.id,
+						"Uso correcto:\n*/translate [targetLanguage] [text]*\n\nEj.\n/translate es-ES hello, im new here\n// output: hola, soy nuevo aquí",
+						id
+					);
+
+				let targetLanguage = args[1];
+				if (targetLanguage && !availableLanguages.includes(targetLanguage)) {
+					return client.reply(
+						chat.id,
+						`Idioma *${targetLanguage}* inválido.\n\nIdiomas válidos:\n${availableLanguages
+							.map((lan) => `*• ${lan}*`)
+							.join("\n")}`,
+						id
+					);
+				} else {
+					targetLanguage = targetLanguage ? targetLanguage : "es-ES";
+				}
+
+				if (quotedMsg) {
+					const translatedText = await translate(quotedMsgObj.body, targetLanguage);
+					return client.reply(chat.id, translatedText, id);
+				}
+				const translatedText = await translate(
+					args[2] ? body.slice(17) : body.slice(11),
+					targetLanguage
+				);
+				return client.reply(chat.id, translatedText, id);
 			case "/wiki":
 				break;
 			case "/fb":
 				try {
 					if (args.length === 1) {
-						return client.reply(from, "Uso correcto */fb [linkFb]*", id);
+						return client.reply(chat.id, "Uso correcto */fb [linkFb]*", id);
 					} else {
-						client.reply(from, mess.wait, id);
+						client.reply(chat.id, mess.wait, id);
 						fb(args[1]).then((res) => {
 							if (res.urlHd)
 								return client.sendFileFromUrl(
-									from,
+									chat.id,
 									`${res.urlHd}`,
 									"video.mp4",
 									res.capt,
@@ -334,7 +367,7 @@ module.exports = msgHandler = async (client, message) => {
 								);
 							else
 								return client.sendFileFromUrl(
-									from,
+									chat.id,
 									`${res.url}`,
 									"video.mp4",
 									res.capt,
@@ -349,12 +382,13 @@ module.exports = msgHandler = async (client, message) => {
 			case "/tiktok":
 				if (args.length === 1)
 					return client.reply(
-						from,
+						chat.id,
 						"El uso correcto es: */tiktok [link]* \nEjemplo: /tiktok https://vm.tiktok.com/ZSJ5yT7Gp/",
 						id
 					);
-				if (!args[1].includes("tiktok.com")) return client.reply(from, mess.error.Iv, id);
-				client.reply(from, mess.wait, id);
+				if (!args[1].includes("tiktok.com"))
+					return client.reply(chat.id, mess.error.Iv, id);
+				client.reply(chat.id, mess.wait, id);
 				try {
 					const videoData = await tiktok.getVideoMeta(args[1]);
 					await tiktok.video(args[1], {
@@ -365,18 +399,18 @@ module.exports = msgHandler = async (client, message) => {
 						`tiktok/${videoData.collector[0].id}.mp4`,
 						`tiktok/tiktok.mp4`
 					);
-					client.sendFile(from, `tiktok\\tiktok.mp4`, `tiktok\\tiktok.mp4`, null, id);
+					client.sendFile(chat.id, `tiktok\\tiktok.mp4`, `tiktok\\tiktok.mp4`, null, id);
 				} catch (error) {
-					client.sendText(from, `ERROR: *${error}*`);
+					client.sendText(chat.id, `ERROR: *${error}*`);
 				}
 
 				break;
 			case "/creator":
-				client.sendContact(from, "5216672545434@c.us");
+				client.sendContact(chat.id, "5216672545434@c.us");
 				break;
 			case "/igstalk":
 				try {
-					client.reply(from, mess.wait, id);
+					client.reply(chat.id, mess.wait, id);
 					const {name, bio, followers, following, posts, pic} =
 						await InstaClient.getProfile(args[1]);
 
@@ -388,18 +422,48 @@ module.exports = msgHandler = async (client, message) => {
 						id
 					);
 				} catch (error) {
-					client.reply(from, `*Error: ${error}*`, id);
+					client.reply(chat.id, `*Error: ${error}*`, id);
 				}
 
 				break;
-			case "/nsfw":
-				if (!isGroupMsg)
-					return client.reply(from, "Este comando solo está disponible en grupos.", id);
-				if (!isGroupAdmins)
-					return client.reply(from, "Solo los admins pueden usar este comando.", id);
+			case "/ig":
 				if (args.length === 1)
 					return client.reply(
-						from,
+						chat.id,
+						"Uso correcto:\n*/ig [igLink]*\n\nEj.\n/ig https://www.instagram.com/p/CK2xvVYheZl/",
+						id
+					);
+				return ig(args[1])
+					.then((url) => client.sendFileFromUrl(chat.id, url, "", "", id))
+					.catch((err) => client.reply(chat.id, err, id));
+			case "/reddit":
+				return axios
+					.get(`https://meme-api.herokuapp.com/gimme/${args[1]}`)
+					.then((res) => {
+						const data = res.data;
+						client.sendFileFromUrl(
+							chat.id,
+							data.url,
+							"img",
+							`*Title:* ${data.title}*\n*PostLink:* ${data.postLink}\n*Subreddit:* ${data.subreddit}\n*Up Votes:* ${data.ups}\n*Original Image:* ${data.url}`,
+							id
+						);
+					})
+					.catch((err) => {
+						client.reply(chat.id, err.response.data.message, id);
+					});
+			case "/nsfw":
+				if (!isGroupMsg)
+					return client.reply(
+						chat.id,
+						"Este comando solo está disponible en grupos.",
+						id
+					);
+				if (!isGroupAdmins)
+					return client.reply(chat.id, "Solo los admins pueden usar este comando.", id);
+				if (args.length === 1)
+					return client.reply(
+						chat.id,
 						"El uso correcto es ```!nsfw enable``` o ```!nsfw disable```",
 						id
 					);
@@ -407,7 +471,7 @@ module.exports = msgHandler = async (client, message) => {
 					nsfw_.push(chat.id);
 					fs.writeFileSync("./lib/NSFW.json", JSON.stringify(nsfw_));
 					client.reply(
-						from,
+						chat.id,
 						"¡El comando NSWF se activó con éxito en este grupo!\nEnvía *!nsfwMenu * para ver qué opciones tengo para ti. 😉",
 						id
 					);
@@ -415,44 +479,52 @@ module.exports = msgHandler = async (client, message) => {
 					nsfw_.splice(chat.id, 1);
 					fs.writeFileSync("./lib/NSFW.json", JSON.stringify(nsfw_));
 					client.reply(
-						from,
+						chat.id,
 						"*¡El comando NSFW se desactivó con éxito en este grupo!*",
 						id
 					);
 				} else {
-					client.reply(from, "El uso correcto es */nsfw enable* o */nsfw disable*", id);
+					client.reply(
+						chat.id,
+						"El uso correcto es */nsfw enable* o */nsfw disable*",
+						id
+					);
 				}
 				break;
 			case "/welcome":
 				if (!isGroupMsg)
-					return client.reply(from, "*Ese comando solo es permitido en grupos.*", id);
+					return client.reply(chat.id, "*Ese comando solo es permitido en grupos.*", id);
 				if (!isGroupAdmins)
 					return client.reply(
-						from,
+						chat.id,
 						"*Tienes que ser admin para ejecutar ese comando.*",
 						id
 					);
 				if (args.length === 1)
 					return client.reply(
-						from,
+						chat.id,
 						"El uso correcto es */welcome enable* o */welcome disable*",
 						id
 					);
 				if (args[1].toLowerCase() === "enable") {
 					welcome.push(chat.id);
-					fs.writeFileSync("./lib/welcome.json", JSON.stringify(welcome));
-					client.reply(from, "Muy bien, ya activé el modo *Bienvenida*", id);
+					fs.writeFileSync("database/group/welcome.json", JSON.stringify(welcome));
+					client.reply(chat.id, "Muy bien, ya activé el modo *Bienvenida*", id);
 				} else if (args[1].toLowerCase() === "disable") {
 					welcome.splice(chat.id, 1);
-					fs.writeFileSync("./lib/welcome.json", JSON.stringify(welcome));
-					client.reply(from, "Muy bien, ya desactivé el modo *Bienvenida*", id);
+					fs.writeFileSync("database/group/welcome.json", JSON.stringify(welcome));
+					client.reply(chat.id, "Muy bien, ya desactivé el modo *Bienvenida*", id);
 				} else {
-					client.reply(from, "El uso correcto es */nsfw enable* o */nsfw disable*", id);
+					client.reply(
+						chat.id,
+						"El uso correcto es */nsfw enable* o */nsfw disable*",
+						id
+					);
 				}
 				break;
 			case "/nsfwmenu":
 				client.reply(
-					from,
+					chat.id,
 					"*Comandos NSFW disponibles*\n\n1. !randomHentai 👧 \n2. !randomBoobs 🍈🍈\n3. !randomPussy 🥟\n4. !randomAss 🍑\n5. !random4k 📺\n6. !randomTentacle 🦑",
 					id
 				);
@@ -465,7 +537,7 @@ module.exports = msgHandler = async (client, message) => {
 						var mediaData = await decryptMedia(quotedMsg, uaOverride);
 					}
 					const imgBS4 = `data:${mimetype};base64,${mediaData.toString("base64")}`;
-					client.reply(from, "Searching....", id);
+					client.reply(chat.id, "Searching....", id);
 					fetch("https://trace.moe/api/search", {
 						method: "POST",
 						body: JSON.stringify({image: imgBS4}),
@@ -500,16 +572,18 @@ module.exports = msgHandler = async (client, message) => {
 							var video = `https://media.trace.moe/video/${anilist_id}/${encodeURIComponent(
 								filename
 							)}?t=${at}&token=${tokenthumb}`;
-							client.sendFileFromUrl(from, video, "nimek.mp4", teks, id).catch(() => {
-								client.reply(from, teks, id);
-							});
+							client
+								.sendFileFromUrl(chat.id, video, "nimek.mp4", teks, id)
+								.catch(() => {
+									client.reply(chat.id, teks, id);
+								});
 						})
 						.catch(() => {
-							client.reply(from, "Error !", id);
+							client.reply(chat.id, "Error !", id);
 						});
 				} else {
 					client.sendFile(
-						from,
+						chat.id,
 						"./media/img/tutod.jpg",
 						"Tutor.jpg",
 						"Neh contoh mhank!",
@@ -520,15 +594,15 @@ module.exports = msgHandler = async (client, message) => {
 			case "/linkgroup":
 				if (!isBotGroupAdmins)
 					return client.reply(
-						from,
+						chat.id,
 						"Este comando solo se puede usar cuando el bot se convierte en administrador.",
 						id
 					);
 				if (isGroupMsg) {
 					const inviteLink = await client.getGroupInviteLink(groupId);
-					client.sendLinkWithAutoPreview(from, inviteLink, `\nLink group *${name}*`);
+					client.sendLinkWithAutoPreview(chat.id, inviteLink, `\nLink group *${name}*`);
 				} else {
-					client.reply(from, "*¡Este comando solo se puede usar en grupos!*", id);
+					client.reply(chat.id, "*¡Este comando solo se puede usar en grupos!*", id);
 				}
 				break;
 			case "/bc":
@@ -544,25 +618,25 @@ module.exports = msgHandler = async (client, message) => {
 				break;
 			case "/adminlist":
 				if (!isGroupMsg)
-					return client.reply(from, "¡Este comando solo se puede usar en grupos!", id);
+					return client.reply(chat.id, "¡Este comando solo se puede usar en grupos!", id);
 				let mimin = "";
 				for (let admon of groupAdmins) {
 					mimin += `➸ @${admon.replace(/@c.us/g, "")}\n`;
 				}
-				await client.sendTextWithMentions(from, mimin);
+				await client.sendTextWithMentions(chat.id, mimin);
 				break;
 			case "/ownergroup":
 				if (!isGroupMsg)
-					return client.reply(from, "¡Este comando solo se puede usar en grupos!", id);
+					return client.reply(chat.id, "¡Este comando solo se puede usar en grupos!", id);
 				const Owner_ = chat.groupMetadata.owner;
-				await client.sendTextWithMentions(from, `Propietario del grupo: @${Owner_}`);
+				await client.sendTextWithMentions(chat.id, `Propietario del grupo: @${Owner_}`);
 				break;
 			case "/mentionall":
 				if (!isGroupMsg)
-					return client.reply(from, "¡Este comando solo se puede usar en grupos!", id);
+					return client.reply(chat.id, "¡Este comando solo se puede usar en grupos!", id);
 				if (!isGroupAdmins)
 					return client.reply(
-						from,
+						chat.id,
 						"Este comando solo puede ser utilizado por administradores del grupo.",
 						id
 					);
@@ -573,21 +647,21 @@ module.exports = msgHandler = async (client, message) => {
 					hehe += ` @${groupMem[i].id.replace(/@c.us/g, "")}\n`;
 				}
 				hehe += "╚═〘 UriBOT 〙";
-				await client.sendTextWithMentions(from, hehe);
+				await client.sendTextWithMentions(chat.id, hehe);
 				break;
 			case "/kickall":
 				if (!isGroupMsg)
-					return client.reply(from, "¡Este comando solo se puede usar en grupos!", id);
+					return client.reply(chat.id, "¡Este comando solo se puede usar en grupos!", id);
 				const isGroupOwner = sender.id === chat.groupMetadata.owner;
 				if (!isGroupOwner)
 					return client.reply(
-						from,
+						chat.id,
 						"Este comando solo puede ser utilizado por el propietario del grupo.",
 						id
 					);
 				if (!isBotGroupAdmins)
 					return client.reply(
-						from,
+						chat.id,
 						"Este comando solo se puede usar cuando el bot se convierte en administrador.",
 						id
 					);
@@ -599,12 +673,12 @@ module.exports = msgHandler = async (client, message) => {
 						await client.removeParticipant(groupId, allMem[i].id);
 					}
 				}
-				client.reply(from, "¡Listo! Ya expulsé a todos los miembros del grupo.", id);
+				client.reply(chat.id, "¡Listo! Ya expulsé a todos los miembros del grupo.", id);
 				break;
 			case "/leaveall":
 				if (!isOwner)
 					return client.reply(
-						from,
+						chat.id,
 						"*Este comando es solo para el propietario del bot.*",
 						id
 					);
@@ -617,12 +691,12 @@ module.exports = msgHandler = async (client, message) => {
 					);
 					await client.leaveGroup(gclist.contact.id);
 				}
-				client.reply(from, "Succes leave all group!", id);
+				client.reply(chat.id, "Succes leave all group!", id);
 				break;
 			case "/clearall":
 				if (!isOwner)
 					return client.reply(
-						from,
+						chat.id,
 						"*Este comando es solo para el propietario del bot.*",
 						id
 					);
@@ -630,163 +704,176 @@ module.exports = msgHandler = async (client, message) => {
 				for (let dchat of allChatz) {
 					await client.deleteChat(dchat.id);
 				}
-				client.reply(from, "Succes clear all chat!", id);
+				client.reply(chat.id, "Succes clear all chat!", id);
 				break;
 			case "/add":
 				const orang = args[1];
 				if (!isGroupMsg)
 					return client.reply(
-						from,
+						chat.id,
 						"*Esta función solo se puede utilizar en grupos.*",
 						id
 					);
 				if (args.length === 1)
 					return client.reply(
-						from,
+						chat.id,
 						"Para utilizar esta función, envíe el comando */add 521xxxxx*",
 						id
 					);
 				if (!isGroupAdmins)
 					return client.reply(
-						from,
+						chat.id,
 						"*Este comando solo puede ser utilizado por administradores de grupo.*",
 						id
 					);
 				if (!isBotGroupAdmins)
 					return client.reply(
-						from,
+						chat.id,
 						"*Este comando solo se puede usar cuando el bot se convierte en administrador.*",
 						id
 					);
 				try {
-					await client.addParticipant(from, `${orang}@c.us`);
+					await client.addParticipant(chat.id, `${orang}@c.us`);
 				} catch {
-					client.reply(from, mess.error.Ad, id);
+					client.reply(chat.id, mess.error.Ad, id);
 				}
 				break;
 			case "/kick":
 				if (!isGroupMsg)
 					return client.reply(
-						from,
+						chat.id,
 						"*Esta función solo se puede utilizar en grupos.*",
 						id
 					);
 				if (!isGroupAdmins)
 					return client.reply(
-						from,
+						chat.id,
 						"*Este comando solo puede ser utilizado por administradores del grupo.*",
 						id
 					);
 				if (!isBotGroupAdmins)
 					return client.reply(
-						from,
+						chat.id,
 						"*Este comando solo se puede usar cuando el bot se convierte en administrador.*",
 						id
 					);
 				if (mentionedJidList.length === 0)
 					return client.reply(
-						from,
+						chat.id,
 						"Para usar este comando, envíe *!kick* @tagmember",
 						id
 					);
-				await client.sendText(from, `Miembro expulsado:\n${mentionedJidList.join("\n")}`);
+				await client.sendText(
+					chat.id,
+					`Miembro expulsado:\n${mentionedJidList.join("\n")}`
+				);
 				for (let i = 0; i < mentionedJidList.length; i++) {
 					if (groupAdmins.includes(mentionedJidList[i]))
-						return client.reply(from, mess.error.Ki, id);
+						return client.reply(chat.id, mess.error.Ki, id);
 					await client.removeParticipant(groupId, mentionedJidList[i]);
 				}
 				break;
 			case "/leave":
+				if (!isOwner)
+					return client.reply(
+						chat.id,
+						"*Este comando es solo para el propietario del bot.*",
+						id
+					);
 				if (!isGroupMsg)
-					return client.reply(from, "*Este comando solo se puede usar en grupos.*", id);
+					return client.reply(
+						chat.id,
+						"*Este comando solo se puede usar en grupos.*",
+						id
+					);
 				if (!isGroupAdmins)
 					return client.reply(
-						from,
+						chat.id,
 						"*Este comando solo puede ser utilizado por administradores del grupo.",
 						id
 					);
 				await client
-					.sendText(from, "*Ahí nos vidrios. 👋*")
+					.sendText(chat.id, "*Ahí nos vidrios. 👋*")
 					.then(() => client.leaveGroup(groupId));
 				break;
 			case "/promote":
 				if (!isGroupMsg)
 					return client.reply(
-						from,
+						chat.id,
 						"*Esta función solo se puede utilizar en grupos.*",
 						id
 					);
 				if (!isGroupAdmins)
 					return client.reply(
-						from,
+						chat.id,
 						"*Este comando solo puede ser utilizado por administradores del grupo.",
 						id
 					);
 				if (!isBotGroupAdmins)
 					return client.reply(
-						from,
+						chat.id,
 						"*Esta función solo se puede usar cuando el bot es un administrador.*",
 						id
 					);
 				if (mentionedJidList.length === 0)
 					return client.reply(
-						from,
+						chat.id,
 						"Para usar esta función, envíe el comando *!promote @tagmember*",
 						id
 					);
 				if (mentionedJidList.length >= 2)
 					return client.reply(
-						from,
+						chat.id,
 						"*Lo sentimos, este comando solo se puede aplicar a un usuario.*",
 						id
 					);
 				if (groupAdmins.includes(mentionedJidList[0]))
-					return client.reply(from, "Maaf, user tersebut sudah menjadi admin.", id);
+					return client.reply(chat.id, "Maaf, user tersebut sudah menjadi admin.", id);
 				await client.promoteParticipant(groupId, mentionedJidList[0]);
 				await client.sendTextWithMentions(
-					from,
+					chat.id,
 					`Perintah diterima, menambahkan @${mentionedJidList[0]} sebagai admin.`
 				);
 				break;
 			case "/demote":
 				if (!isGroupMsg)
-					return client.reply(from, "Fitur ini hanya bisa di gunakan dalam group", id);
+					return client.reply(chat.id, "Fitur ini hanya bisa di gunakan dalam group", id);
 				if (!isGroupAdmins)
 					return client.reply(
-						from,
+						chat.id,
 						"Fitur ini hanya bisa di gunakan oleh admin group",
 						id
 					);
 				if (!isBotGroupAdmins)
 					return client.reply(
-						from,
+						chat.id,
 						"Fitur ini hanya bisa di gunakan ketika bot menjadi admin",
 						id
 					);
 				if (mentionedJidList.length === 0)
 					return client.reply(
-						from,
+						chat.id,
 						"Untuk menggunakan fitur ini, kirim perintah *!demote* @tagadmin",
 						id
 					);
 				if (mentionedJidList.length >= 2)
 					return client.reply(
-						from,
+						chat.id,
 						"Maaf, perintah ini hanya dapat digunakan kepada 1 orang.",
 						id
 					);
 				if (!groupAdmins.includes(mentionedJidList[0]))
-					return client.reply(from, "Maaf, user tersebut tidak menjadi admin.", id);
+					return client.reply(chat.id, "Maaf, user tersebut tidak menjadi admin.", id);
 				await client.demoteParticipant(groupId, mentionedJidList[0]);
 				await client.sendTextWithMentions(
-					from,
+					chat.id,
 					`Perintah diterima, menghapus jabatan @${mentionedJidList[0]}.`
 				);
 				break;
 			case "/join":
 				if (args.length < 2)
 					return client.reply(
-						from,
+						chat.id,
 						"Envíe el comando */join [groupLink]* \n\nEjemplo: \n */join https://chat.whatsapp.com/blabla*",
 						id
 					);
@@ -797,42 +884,42 @@ module.exports = msgHandler = async (client, message) => {
 				const isLink = link.match(/(https:\/\/chat.whatsapp.com)/gi);
 				/* if (key !== "lGjYt4zA5SQlTDx9z9Ca")
 					return client.reply(
-						from,
+						chat.id,
 						"*key* salah! silahkan chat owner bot unruk mendapatkan key yang valid",
 						id
 					); */
 				const check = await client.inviteInfo(link);
-				if (!isLink) return client.reply(from, "¡Y el link? 👊🤬", id);
+				if (!isLink) return client.reply(chat.id, "¡Y el link? 👊🤬", id);
 				if (check.status === 200) {
 					await client
 						.joinGroupViaLink(link)
-						.then(() => client.reply(from, "¡Listo! Ya me uní. 😁", id));
+						.then(() => client.reply(chat.id, "¡Listo! Ya me uní. 😁", id));
 				} else {
-					client.reply(from, "Enlace de grupo inválido.", id);
+					client.reply(chat.id, "Enlace de grupo inválido.", id);
 				}
 				break;
 			case "/delete":
 				if (!isGroupMsg)
 					return client.reply(
-						from,
+						chat.id,
 						"*Esta función solo se puede utilizar en grupos.*",
 						id
 					);
 				if (!isGroupAdmins)
 					return client.reply(
-						from,
+						chat.id,
 						"*Este comando solo puede ser utilizado por administradores del grupo.",
 						id
 					);
 				if (!quotedMsg)
 					return client.reply(
-						from,
+						chat.id,
 						"¡Uso incorrecto!, envía el comando */delete [tagBotMessage]*",
 						id
 					);
 				if (!quotedMsgObj.fromMe)
 					return client.reply(
-						from,
+						chat.id,
 						"*¡Uso incorrecto!, el bot no puede borrar los mensajes de otros usuarios.*",
 						id
 					);
@@ -841,71 +928,71 @@ module.exports = msgHandler = async (client, message) => {
 			case "/getss":
 				if (!isOwner)
 					return client.reply(
-						from,
+						chat.id,
 						"*Este comando es solo para el propietario del bot.*",
 						id
 					);
 				const sesPic = await client.getSnapshot();
-				client.sendFile(from, sesPic, "session.png", "Screenshot", id);
+				client.sendFile(chat.id, sesPic, "session.png", "Screenshot", id);
 				break;
 			case "/listblock":
 				let hih = `Lista de números bloqueados\nTotal : ${blockNumber.length}\n`;
 				for (let i of blockNumber) {
 					hih += `➸ @${i.replace(/@c.us/g, "")}\n`;
 				}
-				client.sendTextWithMentions(from, hih, id);
+				client.sendTextWithMentions(chat.id, hih, id);
 				break;
 			case "/randomloli":
 				const loli = await get.get(`http://api.nekos.fun:8080/api/lewd`).json();
-				client.sendFileFromUrl(from, loli.image, "loli.jpeg", "Loli!", id);
+				client.sendFileFromUrl(chat.id, loli.image, "loli.jpeg", "Loli!", id);
 				break;
 			case "/randomhentai":
 				if (isGroupMsg) {
 					if (!isNsfw)
 						return client.reply(
-							from,
+							chat.id,
 							"El comando *NSFW* no está activado en este grupo.\nActívalo con */nsfw enable*",
 							id
 						);
 				}
 				const hentai = await random("hentai");
-				client.sendFileFromUrl(from, hentai, `Hentai${ext}`, "Hentai!", id);
+				client.sendFileFromUrl(chat.id, hentai, `Hentai${ext}`, "Hentai!", id);
 				break;
 			case "/randomass":
 				if (isGroupMsg) {
 					if (!isNsfw)
 						return client.reply(
-							from,
+							chat.id,
 							"El comando *NSFW* no está activado en este grupo.\nActívalo con */nsfw enable*",
 							id
 						);
 				}
 				const ass = await random("ass");
-				client.sendFileFromUrl(from, ass, `Ass`, "Ass!", id);
+				client.sendFileFromUrl(chat.id, ass, `Ass`, "Ass!", id);
 				break;
 			case "/randompussy":
 				if (isGroupMsg) {
 					if (!isNsfw)
 						return client.reply(
-							from,
+							chat.id,
 							"El comando *NSFW* no está activado en este grupo.\nActívalo con */nsfw enable*",
 							id
 						);
 				}
 				const pussy = await random("pussy");
-				client.sendFileFromUrl(from, pussy, `Pussy`, "Pussy!", id);
+				client.sendFileFromUrl(chat.id, pussy, `Pussy`, "Pussy!", id);
 				break;
 			case "/random4k":
 				if (isGroupMsg) {
 					if (!isNsfw)
 						return client.reply(
-							from,
+							chat.id,
 							"El comando *NSFW* no está activado en este grupo.\nActívalo con */nsfw enable*",
 							id
 						);
 				}
 				const _4k = await random("4k");
-				client.sendFileFromUrl(from, _4k, `4k`, "4k!", id);
+				client.sendFileFromUrl(chat.id, _4k, `4k`, "4k!", id);
 				break;
 
 			case "/randomboobs":
@@ -918,7 +1005,7 @@ module.exports = msgHandler = async (client, message) => {
 						);
 				}
 				const boobs = await random("boobs");
-				client.sendFileFromUrl(from, boobs, `Boobs`, "Boobs!", id);
+				client.sendFileFromUrl(chat.id, boobs, `Boobs`, "Boobs!", id);
 				break;
 			case "/randomtentacle":
 				if (isGroupMsg) {
@@ -930,13 +1017,35 @@ module.exports = msgHandler = async (client, message) => {
 						);
 				}
 				const tentacle = await random("tentacle");
-				client.sendFileFromUrl(from, tentacle, `Tentacles`, "Tentacles!", id);
+				client.sendFileFromUrl(chat.id, tentacle, `Tentacles`, "Tentacles!", id);
 				break;
-			case "/cheems":
+			case "/link2pdf":
 				if (args.length === 1)
+					return client.reply(
+						chat.id,
+						"Uso correcto:\n*/link2pdf https://www.example.com*",
+						id
+					);
+				let options = {format: "A4"};
+				let file = {url: args[1]};
+				return html_to_pdf.generatePdf(file, options).then((pdfBuffer) => {
+					fs.writeFile("UriBOT.pdf", pdfBuffer, (err) => {
+						if (!err)
+							client.sendFile(chat.id, "UriBOT.pdf", "by UriBOT", "by UriBOT", id);
+					});
+				});
+			case "/cheems":
+				if (args.length === 1 && !quotedMsg)
 					return client.reply(from, "*El uso correcto es: /cheems [texto].*");
+				if (quotedMsg) {
+					return client.reply(
+						chat.id,
+						cheemsify(quotedMsgObj.isMedia ? quotedMsgObj.caption : quotedMsgObj.body),
+						id
+					);
+				}
 				const text = body.slice(7);
-				return client.reply(from, cheemsify(text), id);
+				return client.reply(chat.id, cheemsify(text), id);
 			case "/randomdog":
 			case "/randomcat":
 				const petUrl =
@@ -947,55 +1056,55 @@ module.exports = msgHandler = async (client, message) => {
 				const urlImage =
 					args[0] === "/randomdog" ? urlResponse.data.message : urlResponse.data[0].url;
 				const petEmoji = args[0] === "/randomdog" ? "🐶" : "🐱";
-				client.sendFileFromUrl(from, `${urlImage}`, petEmoji, petEmoji, id);
+				client.sendFileFromUrl(chat.id, `${urlImage}`, petEmoji, petEmoji, id);
 				break;
 			case "/sendto":
-				client.sendFile(from, "./msgHndlr.js", "msgHndlr.js");
+				client.sendFile(chat.id, "./msgHndlr.js", "msgHndlr.js");
 				break;
 			case "/url2img":
 				const _query = body.slice(9);
 				if (!_query.match(isUrl))
 					return client.reply(
-						from,
+						chat.id,
 						"La sintaxis correcta es */url2img [link]*\nEjemplo: */url2img https://google.com*",
 						id
 					);
 				if (args.length === 1)
 					return client.reply(
-						from,
+						chat.id,
 						"La sintaxis correcta es */url2img [link]*\nEjemplo: */url2img https://google.com*",
 						id
 					);
-				client.sendFileFromUrl(from, _query, "image.jpg", null, id);
+				client.sendFileFromUrl(chat.id, _query, "image.jpg", null, id);
 				break;
 			case "/meme":
 				const response = await axios.get(
 					"https://meme-api.herokuapp.com/gimme/wholesomeanimemes"
 				);
 				const {postlink, title, subreddit, url, nsfw, spoiler} = response.data;
-				client.sendFileFromUrl(from, `${url}`, "meme.jpg", `${title}`);
+				client.sendFileFromUrl(chat.id, `${url}`, "meme.jpg", `${title}`);
 				break;
 			case "/help":
-				client.sendText(from, help);
+				client.sendText(chat.id, help);
 				break;
 			case "/readme":
-				client.reply(from, readme, id);
+				client.reply(chat.id, readme, id);
 				break;
 			case "/info":
 				client.sendLinkWithAutoPreview(
-					from,
+					chat.id,
 					"https://github.com/urielexis64/whatsapp-uribot",
 					info
 				);
 				break;
 			case "/terms":
-				client.reply(from, terms, id);
+				client.reply(chat.id, terms, id);
 				break;
 			case "/donate":
-				client.reply(from, donate, id);
+				client.reply(chat.id, donate, id);
 				break;
 			case "/changelog":
-				return client.reply(from, changelog, id);
+				return client.reply(chat.id, changelog, id);
 			case "/brainly":
 				if (args.length >= 2) {
 					const brainlySearch = require("./lib/brainly");
@@ -1006,7 +1115,7 @@ module.exports = msgHandler = async (client, message) => {
 						query;
 					}
 					client.reply(
-						from,
+						chat.id,
 						`➸ *Pregunta* : ${
 							query.split(".")[0]
 						}\n\n➸ *Número de respuestas* : ${Number(count)}`,
@@ -1016,13 +1125,13 @@ module.exports = msgHandler = async (client, message) => {
 						res.forEach((opt) => {
 							if (opt.answer.answerImage.length == 0) {
 								client.reply(
-									from,
+									chat.id,
 									`➸ *Pregunta* : ${opt.questionTitle}\n\n➸ *Respuesta* : ${opt.answer.answerTitle}\n`,
 									id
 								);
 							} else {
 								client.reply(
-									from,
+									chat.id,
 									`➸ *Pregunta* : ${opt.questionTitle}\n\n➸ *Respuesta* : ${
 										opt.answer.answerTitle
 									}\n\n➸ *Link* : ${opt.answer.answerImage.join("\n")}`,
@@ -1033,21 +1142,22 @@ module.exports = msgHandler = async (client, message) => {
 					});
 				} else {
 					client.reply(
-						from,
+						chat.id,
 						"Usage:\n/brainly [pregunta] [.count]\n\nExample: \n/brainly javascript .4",
 						id
 					);
 				}
 				break;
+			case "/rp":
+				return client.sendText(chat.id, quotedMsgObj.body);
 			default:
 				client.reply(
-					from,
+					chat.id,
 					"*Comando inválido.* Envía */help* para ver la lista de comandos disponibles.",
 					id
 				);
 		}
 	} catch (err) {
 		console.log(color("[ERROR]", "red"), err);
-		//client.kill().then(a => console.log(a))
 	}
 };

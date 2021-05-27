@@ -1,7 +1,7 @@
 const {create, Client} = require("@open-wa/wa-automate");
 const welcome = require("./lib/welcome");
-const msgHandler = require("./msgHandler");
-const options = require("./options");
+const uribot = require("./message");
+const {options} = require("./tools");
 
 const start = async (client = new Client()) => {
 	console.log("[SERVER] Server Started!");
@@ -17,21 +17,11 @@ const start = async (client = new Client()) => {
 				client.cutMsgCache();
 			}
 		});
-		msgHandler(client, message);
+		uribot(client, message);
 	});
-
-	/* client.onMessage(async (message) => {
-		client.getAmountOfLoadedMessages().then((msg) => {
-			if (msg >= 3000) {
-				client.cutMsgCache();
-			}
-		});
-		msgHandler(client, message);
-	}); */
 
 	client.onGlobalParticipantsChanged(async (heuh) => {
 		await welcome(client, heuh);
-		//left(client, heuh)
 	});
 
 	client.onAddedToGroup((chat) => {
@@ -51,7 +41,6 @@ const start = async (client = new Client()) => {
 			);
 		}
 	});
-	client.ona;
 
 	client.onIncomingCall(async (call) => {
 		await client
@@ -60,6 +49,6 @@ const start = async (client = new Client()) => {
 	});
 };
 
-create(options(true, start))
+create(options(start))
 	.then((client) => start(client))
 	.catch((error) => console.log(error));

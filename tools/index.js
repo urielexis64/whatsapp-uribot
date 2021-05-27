@@ -1,7 +1,7 @@
-module.exports = options = (headless, start) => {
+const options = (start) => {
 	const options = {
 		sessionId: "UriBOT",
-		headless: headless,
+		headless: true,
 		qrTimeout: 0,
 		authTimeout: 0,
 		restartOnCrash: start,
@@ -18,6 +18,11 @@ module.exports = options = (headless, start) => {
 			"--disable-offline-load-stale-cache",
 			"--disk-cache-size=0",
 		],
+		//messagePreprocessor: "AUTO_DECRYPT_SAVE",
 	};
 	return options;
+};
+
+module.exports = {
+	options,
 };
