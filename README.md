@@ -37,51 +37,87 @@ Before running this script, first edit [this section](https://github.com/urielex
 
 ## Features
 
-| Sticker Creator |            Feature             |
-| :-------------: | :----------------------------: |
-|       ✅        |    Send Photo with Caption     |
-|       ✅        |         Reply A Photo          |
-|       ✅        |           Image Url            |
-|       ✅        | Send Video or GIF with Caption |
+| 🏷 Sticker Creator 🏷 |            Feature             |
+| :-----------------: | :----------------------------: |
+|         ✅          |    Send photo with caption     |
+|         ✅          |         Reply a photo          |
+|         ✅          |           Image URL            |
+|         ✅          | Send Video or GIF with caption |
+|         ✅          |          Find Sticker          |
+|         ✅          |           Unsticker            |
 
-| Downloader |             Feature              |
-| :--------: | :------------------------------: |
-|     ✅     |    YouTube mp3/mp4 Downloader    |
-|     ✅     |        Tiktok Downloader         |
-|     ✅     |    Facebook Video Downloader     |
-|     ❌     | Instagram Video/Image Downloader |
+| ⬇ Downloader ⬇ |        Feature        |
+| :------------: | :-------------------: |
+|       ✅       |    YouTube mp3/mp4    |
+|       ✅       |       Play mp3        |
+|       ✅       |        Tiktok         |
+|       ✅       |    Facebook Video     |
+|       ✅       | Instagram Video/Image |
+|       ✅       |     Google Image      |
+|       ✅       |     Reddit Image      |
+|       ✅       |     XVideos Video     |
+|  Coming Soon   |       PH Video        |
 
-| Group Only |              Feature              |
-| :--------: | :-------------------------------: |
-|     ✅     |           Promote User            |
-|     ✅     |            Demote User            |
-|     ✅     |             Kick User             |
-|     ✅     |             Add User              |
-|     ✅     |         Mention All User          |
-|     ✅     |          Get link group           |
-|     ✅     |          Get Admin list           |
-|     ✅     |          Get owner group          |
-|     ✅     |  Enable or Disable nsfw command   |
-|     ✅     | Enable or Disable welcome feature |
+| 📚 Educational 📚 |     Feature      |
+| :---------------: | :--------------: |
+|        ✅         |  Google Search   |
+|        ✅         |  Brainly Search  |
+|        ✅         |  Text to speech  |
+|        ✅         |   Link to PDF    |
+|        ✅         |   URL to Image   |
+|        ✅         |    Translate     |
+|    Coming Soon    | Wikipedia Search |
 
-| Owner Group Only |        Feature        |
-| :--------------: | :-------------------: |
-|        ✅        | Kick All Member Group |
+| 💬 Group Only 💬 |            Feature             |
+| :--------------: | :----------------------------: |
+|        ✅        |          Promote User          |
+|        ✅        |          Demote User           |
+|        ✅        |           Kick User            |
+|        ✅        |            Add User            |
+|        ✅        |        Mention All User        |
+|        ✅        |         Get link group         |
+|        ✅        |         Get admin list         |
+|        ✅        |        Get owner group         |
+|        ✅        |  Enable or Disable nsfw mood   |
+|        ✅        | Enable or Disable welcome mood |
+|        ✅        |         Mute or unmute         |
+|        ✅        |         Join via link          |
 
-| Owner Bot Only |      Feature      |
-| :------------: | :---------------: |
-|       ✅       |  leave all group  |
-|       ✅       | clear all message |
-|       ✅       |     broadcast     |
+| Owner Group Only |     Feature      |
+| :--------------: | :--------------: |
+|        ✅        | Kick All Members |
+|        ✅        |   Leave Group    |
 
-| Other |         Feature         |
-| :---: | :---------------------: |
-|  ✅   |    Get a random meme    |
-|  ✅   |     Text to speech      |
-|  ✅   |     Cheemsify Text      |
-|  ✅   |     Ask to Brainly      |
-|  ✅   | Get a random cat images |
-|  And  |         More...         |
+| Owner Bot Only |     Feature      |
+| :------------: | :--------------: |
+|       ✅       |    Broadcast     |
+|       ✅       |  Get Screenshot  |
+|       ✅       | Get blocked list |
+|       ✅       | Leave all groups |
+|       ✅       |    Clear chat    |
+|       ✅       | Clear all chats  |
+
+| ❔ Help ❔ |        Feature         |
+| :--------: | :--------------------: |
+|     ✅     | All available commands |
+|     ✅     |     Commands Usage     |
+|     ✅     |  Terms and Conditions  |
+|     ✅     |       Changelog        |
+|     ✅     |      General Info      |
+|     ✅     |         Donate         |
+
+| 💡 Shortcut 💡 |    Feature     |
+| :------------: | :------------: |
+|       ✅       | Repeat command |
+|       ✅       |     Write      |
+
+| Other |        Feature        |
+| :---: | :-------------------: |
+|  ✅   |      Get lyrics       |
+|  ✅   |    Cheemsify Text     |
+|  ✅   | Get random cat images |
+|  ✅   | Get random dog images |
+|  And  |        More...        |
 
 ### Troubleshooting
 
