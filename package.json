@@ -10,15 +10,17 @@
 	"author": "Uriel Aispuro",
 	"license": "MIT",
 	"dependencies": {
-		"@open-wa/wa-automate": "^3.16.1",
+		"@open-wa/wa-automate": "^4.1.0",
 		"@open-wa/wa-decrypt": "^2.0.1",
 		"axios": "^0.21.1",
 		"brainly-scraper-v2": "^1.1.2",
 		"chalk": "^4.1.0",
 		"deepl-scraper": "^1.0.11",
 		"emoji-regex": "^9.0.0",
+		"google-it": "^1.6.2",
 		"got": "^11.7.0",
 		"html-pdf-node": "^1.0.7",
+		"images-scraper": "^6.3.0",
 		"instagram-url-direct": "^1.0.9",
 		"moment-timezone": "^0.5.31",
 		"node-fetch": "^2.6.1",
@@ -30,7 +32,7 @@
 		"str-to-2": "^1.0.0",
 		"tiktok-scraper": "^1.4.23",
 		"video-url-link": "^0.1.4",
-		"ytdl-core": "^4.8.0"
+		"ytdl-core": "^4.8.1"
 	},
 	"directories": {
 		"lib": "lib"
