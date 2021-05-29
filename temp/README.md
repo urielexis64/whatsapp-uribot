@@ -1,1 +1,1 @@
-## This folder contains a temporary files.
+## This folder contains temporary files.
