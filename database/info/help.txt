@@ -1,0 +1,157 @@
+*💬 COMANDOS PARA GRUPOS 💬*
+
+✅ */add [(country code)1(contact number)]*
+Agrega el contacto especificado.
+Ejemplo: /add 521xxxxxxxxxx
+✅ */kick @tagmember*
+Expulsa a un miembro del grupo.
+Ejemplo: /kick @Juan
+✅ */promote @tagmember*
+Hace administrador a un miembro del grupo.
+Ejemplo: /promote @Juan
+✅ */demote @tagadmin*
+Quita el puesto de administrador a un miembro del grupo.
+Ejemplo: /demote @Juan
+✅ */mentionAll*
+Menciona a todos los miembros del grupo.
+✅ */adminList*
+Enlista a todos los admins del grupo
+✅ */ownerGroup*
+Envía el número del propietario del grupo.
+✅ */leave*
+El bot abandona el grupo.
+✅ */linkGroup*
+Envía el enlace de invitación para entrar al grupo.
+✅ */delete (replyChatBot)*
+Elimina el mensaje del Bot citado.
+✅ */kickAll*
+Expulsa a todos los miembros del grupo, excepto administradores.
+✅ */nsfw [enable|disable]*
+Activa/Desactiva el modo NSFW.
+Ejemplo: /nsfw enable
+✅ */welcome [enable|disable]*
+Activa/Desactiva el modo Bienvenida.
+Ejemplo: /welcome enable
+✅ */mute*
+Silencia al bot para que ignore los mensajes posteriores.
+✅ */unmute*
+Pone a la escucha al bot de los mensajes posteriores.
+
+*⬇ COMANDOS DE DESCARGA ⬇*
+
+✅ */play [query]*
+Manda un audio con los términos especificados.
+Ejemplo: /play darude sandstorm 
+✅ */ytmp3 [linkYt]*
+Regresa un archivo de audio de un video de Youtube.
+Ejemplo: /ytmp3 https://youtu.be/1me1fHG-Umo
+✅ */ytmp4 [linkYt]*
+Regresa un video de un link de Youtube.
+Ejemplo: /ytmp4 https://youtu.be/1me1fHG-Umo
+✅ */tiktok [linkTiktok]*
+Regresa un video de un post de Tiktok.
+Ejemplo: /tiktok https://www.tiktok.com/@gil_liany/video/6965393461164002561
+✅ */fb [linkFb]*
+Regresa un video de un post público de Facebook.
+Ejemplo: /fb https://www.facebook.com/EpochTimesTrending/videos/310155606660409 
+✅ */url2img [url]*
+Regresa la imagen asociada a una URL.
+Ejemplo: /url2img https://upload.wikimedia.org/wikipedia/commons/8/8f/Example_image.svg
+✅ */xvid [term]*
+✅ */ig [link]*
+Regresa una imagen/video de un post público de Instagram.
+Ejemplo: /ig https://www.instagram.com/p/CFqRZTlluAi/?igshid=1gtxkbdqhnbbe
+✅ */reddit [subreddit]*
+Regresa una imagen de un subreddit específico.
+Ejemplo: /reddit catswithjobs
+
+*🏷 COMANDOS PARA STICKERS 🏷*
+
+✅ */sticker (image | quoted image) [circle?]*
+Regresa un sticker de la imagen a la que se le describió el comando o la imagen citada con el comando.
+✅ */stickerGif (video)*
+Regresa un sticker animado del video al que se le describió el comando.
+✅ */findsticker [query]*
+Busca y regresa un sticker sobre el término especificado.
+Ejemplo: /findsticker cat
+
+*👀 COMANDOS NSFW 👀*
+
+✅ */random4k*
+✅ */randomAss*
+✅ */randomAnal*
+✅ */randomCum*
+✅ */randomFeet*
+✅ */randomBj*
+✅ */randomBoobs*
+✅ */randomPussy*
+✅ */randomHentai*
+✅ */randomTentacle*
+✅ */randomLoli*
+
+*❔ COMANDOS DE AYUDA ❔*
+
+✅ */terms*
+Envía los términos y condiciones del bot.
+✅ */commands*
+Envía una lista con todos los comandos disponibles.
+✅ */help*
+Envía todos los comandos disponibles, cada uno con su respectiva explicación.
+✅ */creator*
+Envía el contacto del creador del bot.
+✅ */info*
+Envía información general sobre el bot.
+✅ */changelog*
+Envía los cambios que cada versión ha implementado.
+
+*🛠 COMANDOS EDUCATIVOS 📚*
+
+✅ */translate ([lang code] [text] | [country]) (quoted message)*
+Traduce el texto al lenguaje especificado.
+Ejemplo: /translate es-ES Hello, I am UriBot
+✅ */google [query]*
+Realiza una búsqueda en Google.
+Ejemplo: /google funny cats
+✅ */googleImg [query] [.count]*
+Realiza una búsqueda en Google y regresa las [.count] imágenes encontradas.
+Ejemplo: /googleImg banana .3
+✅ */link2pdf [url]*
+Convierte una página web a PDF.
+Ejemplo: /link2pdf https://www.google.com/
+✅ */brainly [query] [.count]*
+Realiza una búsqueda en brainly.
+Ejemplo 1: /brainly what is a bot
+Ejemplo 2: /brainly what is a bot .3
+✅ */tts [country code] [text]*
+Regresa un audio hablado del texto en el idioma especificado.
+✅ */wiki [query]* (no sirve)
+
+*📌 OTROS COMANDOS 📌*
+
+✅ */rp (quoted message)*
+Reenvía el mensaje citado.
+✅ */lyrics [query]*
+Regresa la letra de la canción especificada
+Ejemplo: /lyrics all star smash mouth
+✅ */igStalk [@username]*
+Regresa la información del perfil de un usuario de Instagram
+Ejemplo: /igStalk @urielphic
+✅ */randomCat*
+Regresa una imagen aleatoria de gatos.
+✅ */randomDog*
+Regresa una imagen aleatoria de perros.
+✅ */write*
+El bot escribe lo que se especifique.
+Ejemplo: /write hi, I am UriBOT
+✅ */cheems [text]|(quotedMessage)*
+Cheemsifica el texto especificado.
+Ejemplo: /cheems hola
+✅ */getss*
+Regresa una captura de pantalla del estado actual del bot.
+✅ */join [linkGroup]*
+Ingresa al Bot en el grupo del link especificado
+Ejemplo: /join https://chat.whatsapp.com/CAHTe2CrZNLBJmHVUAHhov
+✅ */test*
+Regresa el estado del robot (sirve para comprobar que esté en línea)
+✅ */donate*
+Dona al creador del bot y obtén acceso a comandos premium.

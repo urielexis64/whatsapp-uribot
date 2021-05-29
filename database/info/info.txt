@@ -1,0 +1,6 @@
+🤖 UriBOT 🤖
+
+*Lenguajes de programación utilizados:* Javascript/NodeJS
+*Código fuente del bot:* https://github.com/urielexis64/whatsapp-bot
+*Propietario del bot:* wa.me/5216672545434
+*Versión:* 1.2.0
