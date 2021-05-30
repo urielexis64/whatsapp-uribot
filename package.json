@@ -25,6 +25,7 @@
 		"moment-timezone": "^0.5.31",
 		"node-fetch": "^2.6.1",
 		"node-gtts": "^2.0.2",
+		"node-tesseract-ocr": "^2.2.1",
 		"porn-lib": "^1.4.1",
 		"request": "^2.88.2",
 		"scrape-youtube": "^2.1.8",

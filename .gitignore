@@ -11,3 +11,5 @@ node_modules
 logs/**
 **.mp3
 **.mp4
+**.gif
+**.pdf
