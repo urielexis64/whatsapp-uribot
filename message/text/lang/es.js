@@ -5,7 +5,7 @@ exports.wait = "*Espere un momento...*";
 exports.groupOnly = `*Este comando solo puede ser usado en grupos*`;
 exports.tooLongText = "*¡El texto es demasiado largo!*";
 exports.wrongFormat = `¡Formato incorrecto! Revisa el manual de uso enviando el comando *${prefix}help*`;
-exports.online = "*En linea ✅.*";
+exports.online = "*En linea. ✅*";
 exports.onlyBotAdmin =
 	"*Este comando solo se puede usar cuando el bot se convierte en administrador.*";
 exports.onlyBotOwner = "*Este comando solo puede usarlo el propietario del bot.*";
@@ -14,7 +14,7 @@ exports.onlyAdmins = "*Este comando solo puede ser utilizado por los administrad
 exports.onlyGroupOwner = "*Este comando solo puede ser utilizado por el propietario del grupo.*";
 exports.invalidLink = `*Enlace inválido*.`;
 exports.menuNsfw =
-	"*Comandos NSFW disponibles*\n\n1. /randomHentai 👧 \n2. /randomBoobs 🍈🍈\n3. /randomPussy 🥟\n4. /randomAss 🍑\n5. /random4k 📺\n6. /randomFeet 👣\n7. /randomCum 💦\n8. /randomBj 😮\n9. /randomAnal 🕳\n10. /randomTentacle 🦑";
+	"*Comandos NSFW disponibles*\n\n1. /randomHentai 👧 \n2. /randomBoobs 🍈🍈\n3. /randomPussy 🥟\n4. /randomAss 🍑\n5. /random4k 📺\n6. /randomFeet 👣\n7. /randomCum 💦\n8. /randomBj 😮\n9. /randomAnal 🕳\n10. /randomGoneWild 👩‍🦰\n11. /randomTentacle 🦑";
 exports.nsfwStatus = `El modo *NSFW* no está activado en este grupo.\nActívalo con *${prefix}nsfw enable*`;
 exports.nsfwEnabled = `¡El modo NSWF se activó con éxito en este grupo!\nEnvía *${prefix}nsfwMenu * para ver qué opciones tengo para ti. 😉`;
 exports.nsfwDisabled = "*¡El modo NSFW se desactivó con éxito en este grupo!*";
@@ -84,4 +84,4 @@ exports.redditPost = (data) =>
 	`*Title:* ${data.title}\n*Post link:* ${data.postLink}\n*Subreddit:* ${data.subreddit}\n*Up Votes:* ${data.ups}\n*Original URL:* ${data.url}`;
 exports.igProfile = (data) =>
 	`*Nombre:* ${data.name}\n\n*Biografía:*\n${data.bio}\n\n*Seguidores:*\n${data.followers}\n\n*Siguiendo:*\n${data.following}\n\n*Posts:*\n${data.posts}`;
-exports.generalError = (error) => `Error: ${error}`;
+exports.generalError = (error) => `*Error:* ${error}`;
