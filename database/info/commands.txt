@@ -19,6 +19,7 @@
 *⬇ COMANDOS DE DESCARGA ⬇*
 
 ✅ */play [query]*
+✅ */playv2 [query]*
 ✅ */ytmp3 [linkYt]*
 ✅ */ytmp4 [linkYt]*
 ✅ */tiktok [linkTiktok]*
@@ -65,7 +66,9 @@
 ✅ */link2pdf [url]*
 ✅ */brainly [query] [.count]*
 ✅ */tts [country code] [text]*
-✅ */wiki [query]* (no sirve)
+✅ */imgToTxt (image | quoted image | quoted sticker)*
+✅ */math [math expression]*
+❌ */wiki [query]* (no sirve)
 
 *📌 OTROS COMANDOS 📌*
 

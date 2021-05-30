@@ -42,6 +42,9 @@ Pone a la escucha al bot de los mensajes posteriores.
 ✅ */play [query]*
 Manda un audio con los términos especificados.
 Ejemplo: /play darude sandstorm 
+✅ */playv2 [query]*
+Manda un audio nativo de WhatsApp con los términos especificados.
+Ejemplo: /playv2 darude sandstorm 
 ✅ */ytmp3 [linkYt]*
 Regresa un archivo de audio de un video de Youtube.
 Ejemplo: /ytmp3 https://youtu.be/1me1fHG-Umo
@@ -74,6 +77,8 @@ Regresa un sticker animado del video al que se le describió el comando.
 ✅ */findsticker [query]*
 Busca y regresa un sticker sobre el término especificado.
 Ejemplo: /findsticker cat
+✅ */unsticker (sticker)*
+Convierte a imagen el sticker citado.
 
 *👀 COMANDOS NSFW 👀*
 
@@ -83,6 +88,7 @@ Ejemplo: /findsticker cat
 ✅ */randomCum*
 ✅ */randomFeet*
 ✅ */randomBj*
+✅ */randomGoneWild*
 ✅ */randomBoobs*
 ✅ */randomPussy*
 ✅ */randomHentai*
@@ -101,6 +107,8 @@ Envía todos los comandos disponibles, cada uno con su respectiva explicación.
 Envía el contacto del creador del bot.
 ✅ */info*
 Envía información general sobre el bot.
+✅ */stats*
+Estadísticas generales del bot.
 ✅ */changelog*
 Envía los cambios que cada versión ha implementado.
 
@@ -124,6 +132,11 @@ Ejemplo 1: /brainly what is a bot
 Ejemplo 2: /brainly what is a bot .3
 ✅ */tts [country code] [text]*
 Regresa un audio hablado del texto en el idioma especificado.
+✅ */imgtotxt (image | quotedImage | quotedSticker)*
+Regresa el texto encontrado en la imagen especificada.
+✅ */math [math expression]*
+Resuelve la expresión matemática ingresada.
+Ejemplo: /math pi * sin(45)
 ✅ */wiki [query]* (no sirve)
 
 *📌 OTROS COMANDOS 📌*
