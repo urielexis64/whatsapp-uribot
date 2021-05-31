@@ -1,7 +1,11 @@
-const tiktok = require("tiktok-scraper");
+const {Client} = require("@open-wa/wa-automate");
 const html_to_pdf = require("html-pdf-node");
+const convertapi = require("convertapi")("bnWtM4CFccvCXmmL");
+const PDFMerger = require("pdf-merger-js");
+const merger = new PDFMerger();
 const {decryptMedia} = require("@open-wa/wa-decrypt");
 const fs = require("fs");
+const request = require("request");
 const axios = require("axios");
 const moment = require("moment-timezone");
 const get = require("got");
@@ -13,24 +17,49 @@ const ttsEn = gtts("en");
 const ttsJp = gtts("ja");
 const ttsAr = gtts("ar");
 const ttsEs = gtts("es");
-const google = require("google-it");
+
+const ocrtess = require("node-tesseract-ocr");
+
+// ===================== SCRAPERS ===================== //
+const Insta = require("scraper-instagram");
+const InstaClient = new Insta();
 const Scraper = require("images-scraper");
 const ggl = new Scraper({puppeteer: {headless: true}, safe: false});
+const google = require("google-it");
+const tiktok = require("tiktok-scraper");
+// ===================== END SCRAPERS ===================== //
 
-const {cheemsify, random, songLyrics, translate} = require("../lib/functions");
-const {help, terms, info, donate, cmds} = require("../lib/help");
+// ======================== READ DATABASE ================================ //
 const nsfw_ = JSON.parse(fs.readFileSync("database/group/nsfw.json"));
 const mute_ = JSON.parse(fs.readFileSync("database/bot/mute.json"));
 const welcome_ = JSON.parse(fs.readFileSync("database/group/welcome.json"));
 const stats_ = JSON.parse(fs.readFileSync("database/bot/stats.json"));
-const Insta = require("scraper-instagram");
-const InstaClient = new Insta();
+// ======================== END READ DATABASE ============================ //
 
-moment.tz.setDefault("America/Mexico").locale("mx");
-
-const {fb, ig, ytmp3, ytmp4, play, xvid} = require("../lib/downloader");
+// ================================= UTILS =================================== //
 const {en, es} = require("./text/lang");
-const {Client} = require("@open-wa/wa-automate");
+moment.tz.setDefault("America/Mexico").locale("mx");
+const {help, terms, info, donate, cmds} = require("../lib/help");
+const {fb, ig, ytmp3, ytmp4, play, playv2, xvid} = require("../lib/downloader");
+const {cheemsify, random, songLyrics, translate} = require("../lib/functions");
+const {isBinary} = require("../tools");
+
+const ocrConfig = {
+	lang: "spa+eng",
+	oem: 1,
+	psm: 1,
+};
+
+const stickersMetadata = {
+	author: "🤖 UriBOT 🤖",
+	pack: "UriBOT Stickers Pack",
+	keepScale: true,
+	discord: "urielalexis64#1678",
+};
+
+const animatedStickersConfig = {
+	crop: false,
+};
 
 const availableLanguages = [
 	"en-US",
@@ -60,6 +89,12 @@ const refreshStats = ({files, calls, groups, stickers}) => {
 
 	fs.writeFileSync("database/bot/stats.json", JSON.stringify(stats_));
 };
+// =================================== END UTILS ===================================== //
+
+let isSlept = false;
+let error = false;
+let thereIsMerge1 = false;
+let thereIsMerge2 = false;
 
 module.exports = uribot = async (client = new Client(), message) => {
 	try {
@@ -89,11 +124,10 @@ module.exports = uribot = async (client = new Client(), message) => {
 			!command.startsWith("/") ||
 			command.startsWith("/9j") ||
 			command === "" ||
-			(mute_.includes(chat.id) && command !== "/unmute")
+			(mute_.includes(chat.id) && command !== "/unmute") ||
+			isSlept
 		)
 			return;
-
-		refreshStats({calls: true});
 
 		const msgs = (message) => {
 			if (command.startsWith("/")) {
@@ -105,30 +139,40 @@ module.exports = uribot = async (client = new Client(), message) => {
 			}
 		};
 
-		const stickersMetadata = {
-			author: "🤖 UriBOT 🤖",
-			pack: "UriBOT Stickers Pack",
-			keepScale: true,
-			discord: "urielalexis64#1678",
-		};
+		refreshStats({calls: true});
 
 		const time = moment(t * 1000).format("DD/MM HH:mm:ss");
 		const botNumber = await client.getHostNumber();
 		const blockNumber = await client.getBlockedIds();
 		const groupId = isGroupMsg ? chat.groupMetadata.id : "";
 		const groupAdmins = isGroupMsg ? await client.getGroupAdmins(groupId) : "";
+		const ownerNumber = ["5216672545434@c.us"];
 		const isGroupAdmins = isGroupMsg ? groupAdmins.includes(sender.id) : false;
 		const isBotGroupAdmins = isGroupMsg ? groupAdmins.includes(botNumber + "@c.us") : false;
-		const ownerNumber = ["5216672545434@c.us"];
 		const isOwner = ownerNumber.includes(sender.id);
 		const isBlocked = blockNumber.includes(sender.id);
 		const isNsfw = isGroupMsg ? nsfw_.includes(chat.id) : false;
+
+		const isQuotedImage = quotedMsg && quotedMsg.type === "image";
+		const isQuotedVideo = quotedMsg && quotedMsg.type === "video";
+		const isQuotedSticker = quotedMsg && quotedMsg.type === "sticker";
+		const isQuotedGif = quotedMsg && quotedMsg.mimetype === "image/gif";
+		const isQuotedAudio = quotedMsg && quotedMsg.type === "audio";
+		const isQuotedVoice = quotedMsg && quotedMsg.type === "ptt";
+		const isQuotedPDF = quotedMsg && quotedMsg.mimetype === "application/pdf";
+		const isQuotedDOCX =
+			quotedMsg &&
+			quotedMsg.mimetype ===
+				"application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+		const isImage = type === "image";
+		const isVideo = type === "video";
+		const isAudio = type === "audio";
+		const isVoice = type === "ptt";
+		const isGif = mimetype === "image/gif";
+
 		const uaOverride =
 			"WhatsApp/2.2029.4 Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36" +
 			botNumber;
-		const isUrl = new RegExp(
-			/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&/=]*)/gi
-		);
 		if (!isGroupMsg && command.startsWith("/"))
 			console.log(
 				"\x1b[1;31m~\x1b[1;37m>",
@@ -155,9 +199,9 @@ module.exports = uribot = async (client = new Client(), message) => {
 			// ========================================================== STICKERS SECTION ==========================================================
 			case "/sticker":
 			case "/stiker":
-				client.reply(chat.id, es.making("sticker estático"), id);
 				const circle = args[1] === "circle";
 				if (isMedia && type === "image") {
+					client.reply(chat.id, es.making("sticker"), id);
 					const mediaData = await decryptMedia(message, uaOverride);
 					const imageBase64 = `data:${mimetype};base64,${mediaData.toString("base64")}`;
 					await client.sendImageAsSticker(chat.id, imageBase64, {
@@ -165,6 +209,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 						circle,
 					});
 				} else if (quotedMsg && quotedMsg.type === "image") {
+					client.reply(chat.id, es.making("sticker"), id);
 					const mediaData = await decryptMedia(quotedMsg, uaOverride);
 					const imageBase64 = `data:${quotedMsg.mimetype};base64,${mediaData.toString(
 						"base64"
@@ -174,6 +219,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 						circle,
 					});
 				} else if (args.length === 2) {
+					client.reply(chat.id, es.making("sticker"), id);
 					const url = args[1];
 					if (url.match(isUrl)) {
 						await client
@@ -195,49 +241,68 @@ module.exports = uribot = async (client = new Client(), message) => {
 			case "/stickergif":
 			case "/stikergif":
 			case "/sgif":
-				if (isMedia) {
-					if (
-						(mimetype === "video/mp4" && message.duration <= 10) ||
-						(mimetype === "image/gif" && message.duration <= 10)
-					) {
-						const mediaData = await decryptMedia(message, uaOverride);
-						client.reply(from, es.making("sticker animado"), id);
-						const filename = `./media/aswu.${mimetype.split("/")[1]}`;
-						try {
-							await fs.writeFileSync(filename, mediaData);
-							client.sendMp4AsSticker(
+				if (
+					(mimetype === "video/mp4" || mimetype === "image/gif") &&
+					message.duration <= 5
+				) {
+					client.reply(chat.id, es.making("sticker animado"), id);
+					const mediaData = await decryptMedia(message, uaOverride);
+					const filename = `temp/sticker/sticker.${mimetype.split("/")[1]}`;
+					try {
+						await fs.writeFileSync(filename, mediaData);
+						client
+							.sendMp4AsSticker(
 								chat.id,
 								filename,
-								{
-									crop: false,
-									fps: 30,
-									endTime: "00:00:05.0",
-								},
+								animatedStickersConfig,
 								stickersMetadata
-							);
-						} catch (error) {
-							client.reply(
-								chat.id,
-								"El tamaño del video es muy extenso.\nMáximo peso para videos: *1.5 MB*",
-								id
-							);
-						}
-					} else
+							)
+							.catch(console.log);
+					} catch (error) {
 						client.reply(
 							chat.id,
-							"[❗] El video/GIF debe durar menos de 10 segundos.",
+							"El tamaño del video es muy extenso.\nMáximo peso para videos: *1.5 MB*",
 							id
 						);
-				}
+					}
+				} else if (
+					quotedMsg &&
+					quotedMsgObj.duration <= 5 &&
+					quotedMsgObj.type === "video"
+				) {
+					client.reply(chat.id, es.making("sticker animado"), id);
+					const mediaData = await decryptMedia(quotedMsgObj, uaOverride);
+					const filename = `temp/sticker/sticker.${quotedMsgObj.mimetype.split("/")[1]}`;
+					await fs.writeFileSync(filename, mediaData);
+					client
+						.sendMp4AsSticker(
+							chat.id,
+							filename,
+							animatedStickersConfig,
+							stickersMetadata
+						)
+						.catch(console.log);
+				} else client.reply(chat.id, "[❗] El video/GIF debe durar máximo 5 segundos.", id);
 				refreshStats({stickers: true});
 				break;
 			case "/findsticker":
-				client.reply(chat.id, es.searching);
-				const res = await ggl.scrape(body.slice(13), 1);
-				console.log(res.message);
-				return client
+				client.reply(chat.id, es.searching("sticker"), id);
+				const res = await ggl.scrape(body.slice(13), 5);
+				await client
 					.sendStickerfromUrl(chat.id, res[0].url, {method: "GET"}, stickersMetadata)
-					.then(refreshStats({stickers: true}));
+					.then((res) => {
+						if (!res)
+							return client.reply(
+								chat.id,
+								es.generalError("Sticker no encontrado. Prueba con algo distinto."),
+								id
+							);
+						refreshStats({stickers: true});
+					})
+					.catch((err) => {
+						client.reply(chat.id, es.generalError(err), id);
+					});
+				break;
 			case "/unsticker":
 				if (quotedMsg) {
 					try {
@@ -245,14 +310,14 @@ module.exports = uribot = async (client = new Client(), message) => {
 						const imageBase64 = `data:${quotedMsg.mimetype};base64,${mediaData.toString(
 							"base64"
 						)}`;
-						await client.sendFile(chat.id, imageBase64, "sticker", "Image!", id);
+						await client.sendFile(chat.id, imageBase64, "sticker", "", id);
+						refreshStats({files: true});
 					} catch (err) {
-						await client.reply(chat.id, err, id);
+						await client.reply(chat.id, es.generalError(err), id);
 					}
 				} else {
 					await client.reply(chat.id, es.wrongFormat, id);
 				}
-				refreshStats({files: true});
 				break;
 			// ========================================================== END STICKERS SECTION ==========================================================
 			// ========================================================== DOWNLOADER SECTION ==========================================================
@@ -268,8 +333,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 			case "/ytmp4":
 				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
 				client.reply(chat.id, es.downloading("video"), id);
-
-				const isYtUrl = args[1].match(isUrl);
+				const isYtUrl = isUrl(args[1]);
 				const value = isYtUrl ? args[1] : body.slice(7);
 				return ytmp4(isYtUrl, value)
 					.then(async (title) => {
@@ -286,24 +350,40 @@ module.exports = uribot = async (client = new Client(), message) => {
 					.catch((err) => client.reply(chat.id, `Ocurrió un error: ${err}`, id));
 			case "/play":
 			case "/p":
+				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
 				client.reply(chat.id, es.downloading("audio"), id);
 				return play(args[0] === "/p" ? body.slice(2) : body.slice(5))
 					.then(async (title) => {
-						await client.sendFile(
-							chat.id,
-							`temp/audio/${title}.mp3`,
-							title,
-							title,
-							id,
-							null,
-							true,
-							false,
-							true
-						);
-						fs.rmSync(`temp/audio/${title}.mp3`);
-						refreshStats({files: true});
+						await client
+							.sendFile(
+								chat.id,
+								`temp/audio/${title}.mp3`,
+								title,
+								title,
+								id,
+								null,
+								true,
+								false,
+								true
+							)
+							.then(() => {
+								fs.unlinkSync(`temp/audio/${title}.mp3`);
+								refreshStats({files: true});
+							})
+							.catch((err) => client.reply(chat.id, es.generalError(err), id));
 					})
-					.catch((err) => client.reply(chat.id, err, id));
+					.catch((err) => client.reply(chat.id, es.generalError(err), id));
+			case "/playv2":
+			case "/pv2":
+				return client.reply(chat.id, "*Comando fuera de servicio...*", id);
+				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
+				client.reply(chat.id, es.downloading("audio"), id);
+				return playv2(args[0] === "/pv2" ? body.slice(5) : body.slice(8)).then((res) => {
+					if (res.url) {
+						return client.sendAudio(chat.id, res.url, id);
+					}
+					client.reply(chat.id, es.generalError(res.message), id);
+				});
 			case "/xvid":
 				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
 				const keyword = args[1];
@@ -316,25 +396,29 @@ module.exports = uribot = async (client = new Client(), message) => {
 					client.reply(chat.id, es.wait, id);
 					return fb(args[1]).then((res) => {
 						if (res.urlHd)
-							client.sendFileFromUrl(
-								chat.id,
-								`${res.urlHd}`,
-								"video.mp4",
-								res.capt,
-								id
-							);
+							client
+								.sendFileFromUrl(chat.id, `${res.urlHd}`, "video.mp4", res.capt, id)
+								.catch((err) =>
+									client.reply(
+										chat.id,
+										es.generalError("No se puede extraer el video"),
+										id
+									)
+								);
 						else
-							client.sendFileFromUrl(
-								chat.id,
-								`${res.url}`,
-								"video.mp4",
-								res.capt,
-								id
-							);
+							client
+								.sendFileFromUrl(chat.id, `${res.url}`, "video.mp4", res.capt, id)
+								.catch((err) =>
+									client.reply(
+										chat.id,
+										es.generalError("No se puede extraer el video"),
+										id
+									)
+								);
 						refreshStats({files: true});
 					});
 				} catch (error) {
-					console.log(error);
+					client.reply(chat.id, es.generalError(error), id);
 				}
 				break;
 			case "/tiktok":
@@ -377,20 +461,25 @@ module.exports = uribot = async (client = new Client(), message) => {
 					.catch((err) => client.reply(chat.id, err, id));
 			case "/reddit":
 				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
-				const limitreddit = body.split(".")[1];
+				const limitreddit = body.split(".")[1] || 1;
 				if (limitreddit > 5) return client.reply(chat.id, es.maxCount(5), id);
-				for (let index = 0; index < (limitreddit || 1); index++) {
+				error = false;
+				for (let index = 0; index < limitreddit; index++) {
 					await axios
 						.get(`https://meme-api.herokuapp.com/gimme/${args[1]}`)
 						.then(async (r) => {
 							const data = r.data;
-							client
+							await client
 								.sendFileFromUrl(chat.id, data.url, "img", es.redditPost(data), id)
 								.then(refreshStats({files: true}))
-								.catch((err) => client.reply(chat.id, `*${err}*`, id));
+								.catch((err) => client.reply(chat.id, es.generalError(err), id));
 							await wait(800);
 						})
-						.catch((err) => client.reply(chat.id, `*${err}*`, id));
+						.catch((err) => {
+							client.reply(chat.id, es.generalError(err.response.data.message), id);
+							error = true;
+						});
+					if (error) break;
 				}
 				break;
 			case "/googleimg":
@@ -399,8 +488,12 @@ module.exports = uribot = async (client = new Client(), message) => {
 				if (limitImgs > 5) return client.reply(chat.id, es.maxCount(5), id);
 				const results = await ggl.scrape(body.slice(11), limitImgs || 1);
 				return results.forEach((res) => {
-					client.sendFileFromUrl(chat.id, res.url, "", res.title);
-					refreshStats({files: true});
+					client
+						.sendFileFromUrl(chat.id, res.url, "", res.title)
+						.then(() => refreshStats({files: true}))
+						.catch((err) => {
+							client.reply(chat.id, es.generalError(err), id);
+						});
 				});
 			// ========================================================== END DOWNLOADER SECTION ==========================================================
 			// ========================================================== GROUPS SECTION ==========================================================
@@ -522,7 +615,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 				if (mentionedJidList.length === 0 || mentionedJidList.length > 1)
 					return client.reply(chat.id, es.wrongFormat, id);
 				if (groupAdmins.includes(mentionedJidList[0]))
-					return client.reply(chat.id, "Maaf, user tersebut sudah menjadi admin.", id);
+					return client.reply(chat.id, es.isAlreadyAdmin, id);
 				await client.promoteParticipant(groupId, mentionedJidList[0]);
 				await client.sendTextWithMentions(
 					chat.id,
@@ -568,6 +661,12 @@ module.exports = uribot = async (client = new Client(), message) => {
 				return client.deleteMessage(quotedMsgObj.chatId, quotedMsgObj.id, false);
 			// ========================================================== END GROUPS SECTION ==========================================================
 			// ============================================================ OWNER SECTION ============================================================
+			case "/sleep":
+				if (!isOwner) return client.reply(chat.id, es.onlyBotOwner, id);
+				isSlept = true;
+				return setTimeout(() => {
+					isSlept = false;
+				}, args[1]);
 			case "/getss":
 				if (!isOwner) return client.reply(chat.id, es.onlyBotOwner, id);
 				const sesPic = await client.getSnapshot();
@@ -693,23 +792,105 @@ module.exports = uribot = async (client = new Client(), message) => {
 				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
 				let options = {format: "A4"};
 				let file = {url: args[1]};
-				return html_to_pdf.generatePdf(file, options).then((pdfBuffer) => {
-					fs.writeFile("temp/archive/UriBOT.pdf", pdfBuffer, (err) => {
-						if (!err) {
-							client.sendFile(
+				return html_to_pdf
+					.generatePdf(file, options)
+					.then((pdfBuffer) => {
+						fs.writeFile(`temp/archive/${chat.id}_link2pdf.pdf`, pdfBuffer, (err) => {
+							if (!err) {
+								client
+									.sendFile(
+										chat.id,
+										`temp/archive/${chat.id}_link2pdf.pdf`,
+										"by UriBOT",
+										"*by UriBot*",
+										id
+									)
+									.then(() => {
+										refreshStats({files: true});
+										fs.unlinkSync(`temp/archive/${chat.id}_link2pdf.pdf`);
+									});
+							}
+						});
+					})
+					.catch((err) => client.reply(chat.id, es.generalError(err), id));
+			case "/doc2pdf":
+			case "/img2pdf":
+				if (!isQuotedDOCX && !isQuotedImage)
+					return client.reply(chat.id, es.invalidExtension, id);
+				client.reply(chat.id, es.converting(isQuotedImage ? "image" : "doc", "pdf"), id);
+				const mediaData = await decryptMedia(quotedMsg, uaOverride);
+				const filename = `temp/archive/${sender.id}_converted.${
+					isQuotedImage ? "jpg" : "doc"
+				}`;
+				await fs.writeFileSync(filename, mediaData);
+				return convertapi
+					.convert(
+						"pdf",
+						{
+							File: `temp/archive/${sender.id}_converted.${
+								isQuotedImage ? "jpg" : "doc"
+							}`,
+						},
+						isQuotedImage ? "jpg" : "doc"
+					)
+					.then(async (result) => {
+						await result.saveFiles("temp/archive/");
+						client
+							.sendFile(
 								chat.id,
-								"temp/archive/UriBOT.pdf",
-								"by UriBOT",
-								"",
+								`temp/archive/${sender.id}_output.pdf`,
+								"by UriBot",
+								"*by UriBot*",
 								id
-							);
-							refreshStats({files: true});
-						}
+							)
+							.then(() => {
+								refreshStats({files: true});
+								fs.unlinkSync(`temp/archive/${sender.id}_output.pdf`);
+							});
+					})
+					.catch((err) => client.reply(chat.id, es.generalError(err), id));
+			case "/merge1":
+				if (!isQuotedPDF) return client.reply(chat.id, es.wrongFormat, id);
+				const mergeData1 = await decryptMedia(quotedMsg, uaOverride);
+				const mergeFilename1 = `temp/archive/${sender.id}_merge1.pdf`;
+				await fs.writeFileSync(mergeFilename1, mergeData1);
+				return client.reply(chat.id, "*✅ Primera parte guardada.*", id);
+			case "/merge2":
+				if (!isQuotedPDF) return client.reply(chat.id, es.wrongFormat, id);
+				const mergeData2 = await decryptMedia(quotedMsg, uaOverride);
+				const mergeFilename2 = `temp/archive/${sender.id}_merge2.pdf`;
+				await fs.writeFileSync(mergeFilename2, mergeData2);
+				return client.reply(
+					chat.id,
+					"*✅ Segunda parte guardada.* Ahora envíe el comando */mergepdfs* para combinarlos.",
+					id
+				);
+			case "/mergepdfs":
+				const basePath = "temp/archive";
+				const merge1Exists = fs.existsSync(`${basePath}/${sender.id}_merge1.pdf`);
+				const merge2Exists = fs.existsSync(`${basePath}/${sender.id}_merge2.pdf`);
+				if (!merge1Exists || !merge2Exists)
+					return client.reply(chat.id, es.wrongFormat, id);
+				merger.add(`${basePath}/${sender.id}_merge1.pdf`);
+				merger.add(`${basePath}/${sender.id}_merge2.pdf`);
+				await merger.save(`${basePath}/${sender.id}_merged.pdf`);
+				return client
+					.sendFile(
+						chat.id,
+						`${basePath}/${sender.id}_merged.pdf`,
+						"Merged by UriBot",
+						"",
+						id
+					)
+					.then(() => {
+						refreshStats({files: true});
+						fs.unlinkSync(`${basePath}/${sender.id}_merge1.pdf`);
+						fs.unlinkSync(`${basePath}/${sender.id}_merge2.pdf`);
+						fs.unlinkSync(`${basePath}/${sender.id}_merged.pdf`);
 					});
-				});
 			case "/brainly":
 				if (args.length > 1) {
-					const brainlySearch = require("./lib/brainly");
+					const brainlySearch = require("../lib/brainly");
 					let query = body.slice(9);
 					let count = Number(query.split(".")[1]) || 2;
 					if (count > 10) return client.reply(chat.id, es.maxCount(10), id);
@@ -755,12 +936,16 @@ module.exports = uribot = async (client = new Client(), message) => {
 			case "/translate":
 				if (args.length === 1 && !quotedMsg)
 					return client.reply(chat.id, es.wrongFormat, id);
-
+				client.reply(chat.id, es.translating, id);
 				let targetLanguage = args[1];
-				if (targetLanguage && !availableLanguages.includes(targetLanguage)) {
+				if (
+					targetLanguage &&
+					!availableLanguages.includes(targetLanguage) &&
+					!isBinary(args[1])
+				) {
 					return client.reply(
 						chat.id,
-						es.availableLanguages(targetLanguage, availableLanguages),
+						es.invalidLanguage(targetLanguage, availableLanguages),
 						id
 					);
 				} else {
@@ -771,6 +956,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 					const translatedText = await translate(quotedMsgObj.body, targetLanguage);
 					return client.reply(chat.id, translatedText, id);
 				}
+
 				const translatedText = await translate(
 					args[2] ? body.slice(17) : body.slice(11),
 					targetLanguage
@@ -829,6 +1015,35 @@ module.exports = uribot = async (client = new Client(), message) => {
 					.catch(async (err) => {
 						await client.reply(chat.id, err, id);
 					});
+			case "/math":
+				return axios
+					.get(`http://api.mathjs.org/v4/?expr=${body.slice(6).toLowerCase()}`)
+					.then((res) => {
+						client.reply(chat.id, `*Respuesta:* ${res.data}`, id);
+					})
+					.catch((err) => client.reply(chat.id, es.generalError(err), id));
+			case "/imagetotext":
+			case "/imgtotext":
+			case "/imgtotxt":
+			case "/totxt":
+			case "/totext":
+				if ((isMedia && isImage) || isQuotedImage || isQuotedSticker) {
+					await client.reply(chat.id, es.wait, id);
+					const encryptMedia = isQuotedImage || isQuotedSticker ? quotedMsg : message;
+					const mediaData = await decryptMedia(encryptMedia, uaOverride);
+					fs.writeFileSync(`temp/image/${sender.id}.jpg`, mediaData);
+					ocrtess
+						.recognize(`temp/image/${sender.id}.jpg`, ocrConfig)
+						.then(async (text) => {
+							await client.reply(chat.id, `${text.trim()}`, id);
+							fs.unlinkSync(`temp/image/${sender.id}.jpg`);
+						})
+						.catch(async (err) => {
+							await client.reply(chat.id, es.generalError(err), id);
+						});
+				} else {
+					await client.reply(chat.id, es.wrongFormat, id);
+				}
 			case "/wiki":
 				break;
 			// ========================================================== 🛠 END UTILS/EDUCATIONAL SECTION 📚 ==========================================================

@@ -23,6 +23,15 @@ const options = (start) => {
 	return options;
 };
 
+const isBinary = (text) => text.match(/^(0|1|\s)*$/g);
+
+const isUrl = (text) =>
+	text.match(
+		/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&/=]*)/gi
+	);
+
 module.exports = {
 	options,
+	isBinary,
+	isUrl,
 };
