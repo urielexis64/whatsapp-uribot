@@ -19,7 +19,7 @@
 *⬇ COMANDOS DE DESCARGA ⬇*
 
 ✅ */play [query]*
-✅ */playv2 [query]*
+❌ */playv2 [query]* (no sirve)
 ✅ */ytmp3 [linkYt]*
 ✅ */ytmp4 [linkYt]*
 ✅ */tiktok [linkTiktok]*
@@ -31,9 +31,10 @@
 
 *🏷 COMANDOS PARA STICKERS 🏷*
 
-✅ */sticker (image /quoted image)*
+✅ */sticker (image | quoted image)*
 ✅ */stickerGif (video)*
-✅ */findsticker [query]*
+✅ */findSticker [query]*
+✅ */unsticker (quoted sticker)*
 
 *👀 COMANDOS NSFW 👀*
 
@@ -68,6 +69,9 @@
 ✅ */tts [country code] [text]*
 ✅ */imgToTxt (image | quoted image | quoted sticker)*
 ✅ */math [math expression]*
+✅ */doc2pdf (quoted doc file)*
+✅ */img2pdf (quoted image)*
+✅ */mergepdfs*
 ❌ */wiki [query]* (no sirve)
 
 *📌 OTROS COMANDOS 📌*
