@@ -1,5 +1,8 @@
 const {Client} = require("@open-wa/wa-automate");
 const html_to_pdf = require("html-pdf-node");
+const convertapi = require("convertapi")("bnWtM4CFccvCXmmL");
+const PDFMerger = require("pdf-merger-js");
+const merger = new PDFMerger();
 const {decryptMedia} = require("@open-wa/wa-decrypt");
 const fs = require("fs");
 const request = require("request");
@@ -39,6 +42,7 @@ moment.tz.setDefault("America/Mexico").locale("mx");
 const {help, terms, info, donate, cmds} = require("../lib/help");
 const {fb, ig, ytmp3, ytmp4, play, playv2, xvid} = require("../lib/downloader");
 const {cheemsify, random, songLyrics, translate} = require("../lib/functions");
+const {isBinary} = require("../tools");
 
 const ocrConfig = {
 	lang: "spa+eng",
@@ -89,6 +93,8 @@ const refreshStats = ({files, calls, groups, stickers}) => {
 
 let isSlept = false;
 let error = false;
+let thereIsMerge1 = false;
+let thereIsMerge2 = false;
 
 module.exports = uribot = async (client = new Client(), message) => {
 	try {
@@ -153,6 +159,11 @@ module.exports = uribot = async (client = new Client(), message) => {
 		const isQuotedGif = quotedMsg && quotedMsg.mimetype === "image/gif";
 		const isQuotedAudio = quotedMsg && quotedMsg.type === "audio";
 		const isQuotedVoice = quotedMsg && quotedMsg.type === "ptt";
+		const isQuotedPDF = quotedMsg && quotedMsg.mimetype === "application/pdf";
+		const isQuotedDOCX =
+			quotedMsg &&
+			quotedMsg.mimetype ===
+				"application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 		const isImage = type === "image";
 		const isVideo = type === "video";
 		const isAudio = type === "audio";
@@ -162,9 +173,6 @@ module.exports = uribot = async (client = new Client(), message) => {
 		const uaOverride =
 			"WhatsApp/2.2029.4 Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36" +
 			botNumber;
-		const isUrl = new RegExp(
-			/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&/=]*)/gi
-		);
 		if (!isGroupMsg && command.startsWith("/"))
 			console.log(
 				"\x1b[1;31m~\x1b[1;37m>",
@@ -325,8 +333,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 			case "/ytmp4":
 				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
 				client.reply(chat.id, es.downloading("video"), id);
-
-				const isYtUrl = args[1].match(isUrl);
+				const isYtUrl = isUrl(args[1]);
 				const value = isYtUrl ? args[1] : body.slice(7);
 				return ytmp4(isYtUrl, value)
 					.then(async (title) => {
@@ -360,14 +367,15 @@ module.exports = uribot = async (client = new Client(), message) => {
 								true
 							)
 							.then(() => {
-								fs.rmSync(`temp/audio/${title}.mp3`);
+								fs.unlinkSync(`temp/audio/${title}.mp3`);
 								refreshStats({files: true});
 							})
 							.catch((err) => client.reply(chat.id, es.generalError(err), id));
 					})
-					.catch((err) => client.reply(chat.id, err, id));
+					.catch((err) => client.reply(chat.id, es.generalError(err), id));
 			case "/playv2":
 			case "/pv2":
+				return client.reply(chat.id, "*Comando fuera de servicio...*", id);
 				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
 				client.reply(chat.id, es.downloading("audio"), id);
 				return playv2(args[0] === "/pv2" ? body.slice(5) : body.slice(8)).then((res) => {
@@ -607,7 +615,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 				if (mentionedJidList.length === 0 || mentionedJidList.length > 1)
 					return client.reply(chat.id, es.wrongFormat, id);
 				if (groupAdmins.includes(mentionedJidList[0]))
-					return client.reply(chat.id, "Maaf, user tersebut sudah menjadi admin.", id);
+					return client.reply(chat.id, es.isAlreadyAdmin, id);
 				await client.promoteParticipant(groupId, mentionedJidList[0]);
 				await client.sendTextWithMentions(
 					chat.id,
@@ -787,20 +795,99 @@ module.exports = uribot = async (client = new Client(), message) => {
 				return html_to_pdf
 					.generatePdf(file, options)
 					.then((pdfBuffer) => {
-						fs.writeFile("temp/archive/UriBOT.pdf", pdfBuffer, (err) => {
+						fs.writeFile(`temp/archive/${chat.id}_link2pdf.pdf`, pdfBuffer, (err) => {
 							if (!err) {
-								client.sendFile(
-									chat.id,
-									"temp/archive/UriBOT.pdf",
-									"by UriBOT",
-									"",
-									id
-								);
-								refreshStats({files: true});
+								client
+									.sendFile(
+										chat.id,
+										`temp/archive/${chat.id}_link2pdf.pdf`,
+										"by UriBOT",
+										"*by UriBot*",
+										id
+									)
+									.then(() => {
+										refreshStats({files: true});
+										fs.unlinkSync(`temp/archive/${chat.id}_link2pdf.pdf`);
+									});
 							}
 						});
 					})
 					.catch((err) => client.reply(chat.id, es.generalError(err), id));
+			case "/doc2pdf":
+			case "/img2pdf":
+				if (!isQuotedDOCX && !isQuotedImage)
+					return client.reply(chat.id, es.invalidExtension, id);
+				client.reply(chat.id, es.converting(isQuotedImage ? "image" : "doc", "pdf"), id);
+				const mediaData = await decryptMedia(quotedMsg, uaOverride);
+				const filename = `temp/archive/${sender.id}_converted.${
+					isQuotedImage ? "jpg" : "doc"
+				}`;
+				await fs.writeFileSync(filename, mediaData);
+				return convertapi
+					.convert(
+						"pdf",
+						{
+							File: `temp/archive/${sender.id}_converted.${
+								isQuotedImage ? "jpg" : "doc"
+							}`,
+						},
+						isQuotedImage ? "jpg" : "doc"
+					)
+					.then(async (result) => {
+						await result.saveFiles("temp/archive/");
+						client
+							.sendFile(
+								chat.id,
+								`temp/archive/${sender.id}_output.pdf`,
+								"by UriBot",
+								"*by UriBot*",
+								id
+							)
+							.then(() => {
+								refreshStats({files: true});
+								fs.unlinkSync(`temp/archive/${sender.id}_output.pdf`);
+							});
+					})
+					.catch((err) => client.reply(chat.id, es.generalError(err), id));
+			case "/merge1":
+				if (!isQuotedPDF) return client.reply(chat.id, es.wrongFormat, id);
+				const mergeData1 = await decryptMedia(quotedMsg, uaOverride);
+				const mergeFilename1 = `temp/archive/${sender.id}_merge1.pdf`;
+				await fs.writeFileSync(mergeFilename1, mergeData1);
+				return client.reply(chat.id, "*✅ Primera parte guardada.*", id);
+			case "/merge2":
+				if (!isQuotedPDF) return client.reply(chat.id, es.wrongFormat, id);
+				const mergeData2 = await decryptMedia(quotedMsg, uaOverride);
+				const mergeFilename2 = `temp/archive/${sender.id}_merge2.pdf`;
+				await fs.writeFileSync(mergeFilename2, mergeData2);
+				return client.reply(
+					chat.id,
+					"*✅ Segunda parte guardada.* Ahora envíe el comando */mergepdfs* para combinarlos.",
+					id
+				);
+			case "/mergepdfs":
+				const basePath = "temp/archive";
+				const merge1Exists = fs.existsSync(`${basePath}/${sender.id}_merge1.pdf`);
+				const merge2Exists = fs.existsSync(`${basePath}/${sender.id}_merge2.pdf`);
+				if (!merge1Exists || !merge2Exists)
+					return client.reply(chat.id, es.wrongFormat, id);
+				merger.add(`${basePath}/${sender.id}_merge1.pdf`);
+				merger.add(`${basePath}/${sender.id}_merge2.pdf`);
+				await merger.save(`${basePath}/${sender.id}_merged.pdf`);
+				return client
+					.sendFile(
+						chat.id,
+						`${basePath}/${sender.id}_merged.pdf`,
+						"Merged by UriBot",
+						"",
+						id
+					)
+					.then(() => {
+						refreshStats({files: true});
+						fs.unlinkSync(`${basePath}/${sender.id}_merge1.pdf`);
+						fs.unlinkSync(`${basePath}/${sender.id}_merge2.pdf`);
+						fs.unlinkSync(`${basePath}/${sender.id}_merged.pdf`);
+					});
 			case "/brainly":
 				if (args.length > 1) {
 					const brainlySearch = require("../lib/brainly");
@@ -849,12 +936,16 @@ module.exports = uribot = async (client = new Client(), message) => {
 			case "/translate":
 				if (args.length === 1 && !quotedMsg)
 					return client.reply(chat.id, es.wrongFormat, id);
-
+				client.reply(chat.id, es.translating, id);
 				let targetLanguage = args[1];
-				if (targetLanguage && !availableLanguages.includes(targetLanguage)) {
+				if (
+					targetLanguage &&
+					!availableLanguages.includes(targetLanguage) &&
+					!isBinary(args[1])
+				) {
 					return client.reply(
 						chat.id,
-						es.availableLanguages(targetLanguage, availableLanguages),
+						es.invalidLanguage(targetLanguage, availableLanguages),
 						id
 					);
 				} else {
@@ -865,6 +956,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 					const translatedText = await translate(quotedMsgObj.body, targetLanguage);
 					return client.reply(chat.id, translatedText, id);
 				}
+
 				const translatedText = await translate(
 					args[2] ? body.slice(17) : body.slice(11),
 					targetLanguage
@@ -927,10 +1019,14 @@ module.exports = uribot = async (client = new Client(), message) => {
 				return axios
 					.get(`http://api.mathjs.org/v4/?expr=${body.slice(6).toLowerCase()}`)
 					.then((res) => {
-						client.reply(chat.id, `Respuesta: ${res.data}`, id);
+						client.reply(chat.id, `*Respuesta:* ${res.data}`, id);
 					})
 					.catch((err) => client.reply(chat.id, es.generalError(err), id));
+			case "/imagetotext":
+			case "/imgtotext":
 			case "/imgtotxt":
+			case "/totxt":
+			case "/totext":
 				if ((isMedia && isImage) || isQuotedImage || isQuotedSticker) {
 					await client.reply(chat.id, es.wait, id);
 					const encryptMedia = isQuotedImage || isQuotedSticker ? quotedMsg : message;
