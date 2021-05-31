@@ -42,7 +42,7 @@ moment.tz.setDefault("America/Mexico").locale("mx");
 const {help, terms, info, donate, cmds} = require("../lib/help");
 const {fb, ig, ytmp3, ytmp4, play, playv2, xvid} = require("../lib/downloader");
 const {cheemsify, random, songLyrics, translate} = require("../lib/functions");
-const {isBinary} = require("../tools");
+const {isBinary, isUrl} = require("../tools");
 
 const ocrConfig = {
 	lang: "spa+eng",
@@ -326,8 +326,10 @@ module.exports = uribot = async (client = new Client(), message) => {
 				const youtubeUrl = args[1];
 				return ytmp3(youtubeUrl)
 					.then((title) => {
-						client.sendFile(chat.id, `temp/audio/${title}.mp3`, title, title, id);
-						refreshStats({files: true});
+						client.sendAudio(chat.id, `temp/audio/${title}.mp3`, id).then(async () => {
+							await fs.unlinkSync(`temp/audio/${title}.mp3`);
+							refreshStats({files: true});
+						});
 					})
 					.catch((err) => client.reply(chat.id, `Ocurrió un error: ${err}`, id));
 			case "/ytmp4":
@@ -337,15 +339,13 @@ module.exports = uribot = async (client = new Client(), message) => {
 				const value = isYtUrl ? args[1] : body.slice(7);
 				return ytmp4(isYtUrl, value)
 					.then(async (title) => {
-						client.sendFile(
-							chat.id,
-							`temp/video/${title}.mp4`,
-							`${title}.mp4`,
-							title,
-							id
-						);
-						fs.rmSync(`temp/video/${title}.mp4`);
-						refreshStats({files: true});
+						await client
+							.sendFile(chat.id, `temp/video/${title}.mp4`, `${title}.mp4`, title, id)
+							.then(() => {
+								fs.unlinkSync(`temp/video/${title}.mp4`);
+								refreshStats({files: true});
+							})
+							.catch((err) => client.reply(chat.id, es.generalError(err), id));
 					})
 					.catch((err) => client.reply(chat.id, `Ocurrió un error: ${err}`, id));
 			case "/play":
@@ -483,6 +483,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 				}
 				break;
 			case "/googleimg":
+				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
 				client.reply(chat.id, es.searching("imágenes"), id);
 				const limitImgs = body.split(".")[1];
 				if (limitImgs > 5) return client.reply(chat.id, es.maxCount(5), id);
@@ -834,7 +835,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 						isQuotedImage ? "jpg" : "doc"
 					)
 					.then(async (result) => {
-						await result.saveFiles("temp/archive/");
+						await result.saveFiles(`temp/archive/${sender.id}_output.pdf`);
 						client
 							.sendFile(
 								chat.id,
@@ -929,10 +930,11 @@ module.exports = uribot = async (client = new Client(), message) => {
 				break;
 			case "/url2img":
 				const _query = body.slice(9);
-				if (!_query.match(isUrl)) return client.reply(chat.id, es.wrongFormat, id);
+				if (!isUrl(_query)) return client.reply(chat.id, es.wrongFormat, id);
 				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
-				refreshStats({files: true});
-				return client.sendFileFromUrl(chat.id, _query, `Image from ${_query}`, null, id);
+				return client
+					.sendFileFromUrl(chat.id, _query, `Image from ${_query}`, null, id)
+					.then(() => refreshStats({files: true}));
 			case "/translate":
 				if (args.length === 1 && !quotedMsg)
 					return client.reply(chat.id, es.wrongFormat, id);
@@ -951,9 +953,8 @@ module.exports = uribot = async (client = new Client(), message) => {
 				} else {
 					targetLanguage = targetLanguage ? targetLanguage : "es-ES";
 				}
-
 				if (quotedMsg) {
-					const translatedText = await translate(quotedMsgObj.body, targetLanguage);
+					const translatedText = await translate(quotedMsg.body, targetLanguage);
 					return client.reply(chat.id, translatedText, id);
 				}
 
@@ -966,8 +967,8 @@ module.exports = uribot = async (client = new Client(), message) => {
 				if (args.length === 1 && !quotedMsg)
 					return client.reply(chat.id, es.wrongFormat, id);
 				let dataText = body.slice(8);
-				if (quotedMsg && (quotedMsgObj.caption || quotedMsgObj.body)) {
-					dataText = quotedMsgObj.isMedia ? quotedMsgObj.caption : quotedMsgObj.body;
+				if (quotedMsg && (quotedMsg.caption || quotedMsg.body)) {
+					dataText = isMedia ? quotedMsg.caption : quotedMsg.body;
 				} else if (quotedMsg) return client.reply(chat.id, es.wrongFormat, id);
 
 				if (dataText === "") return client.reply(chat.id, es.wrongFormat, id);
@@ -999,10 +1000,10 @@ module.exports = uribot = async (client = new Client(), message) => {
 				refreshStats({files: true});
 				break;
 			case "/google":
-				client.reply(chat.id, es.searching("información"), id);
 				const limitSearch = body.split(".")[1];
 				if (limitSearch > 5) return client.reply(chat.id, es.maxCount(5), id);
 				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
+				client.reply(chat.id, es.searching("información"), id);
 				const query = body.slice(8);
 				return google({query, "no-display": true, limit: limitSearch || 1})
 					.then(async (results) => {
