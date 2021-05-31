@@ -24,11 +24,25 @@ exports.muted = "Modo *silencio* activado";
 exports.unmuted = "Modo *silencio* desactivado";
 exports.addContactError = "*[❗] No se pudo agregar el contacto.*";
 exports.cantKickAdmin = "*[❗] ¡El bot no puede expulsar a un administrador!*";
+exports.isAlreadyAdmin = "*El usuario ya es administrador.*";
 exports.languagesData =
 	"Ingrese los datos del idioma: *[es]* para español, *[en]* para inglés, *[jp]* para japonés, *[ar]* para árabe y *[id]* para indonesio.";
 exports.invalidCommand = `*Comando inválido.* Envía *${prefix}help* para ver la lista de comandos disponibles.`;
+exports.invalidExtension = `*Extensión inválida.*`;
+exports.translating = `*Traduciendo...*`;
+exports.mergingPDF = `*Merging PDFs...*`;
 exports.bye = "*Adiós. 👋*";
 exports.changelog = `*📌 CHANGELOG 📌*
+v1.4.0   |   CAMBIAR
+*[NEW]* /math
+*[NEW]* /imgToText
+*[NEW]* /doc2pdf
+*[NEW]* /img2pdf
+*[NEW]* /mergepdfs
+*[IMPROVED]* More translated messages.
+*[FIX]* Some audios not playing when using /play command.
+*[FIX]* Can't download videos/audios due to age restricted. (ytmp3, ytmp4, play)
+*[FIX]* Error when downloading videos/audios due to strange symbols on the title. (/\\:*?"<>|)
 
 v1.3.0   |   28/05/2021
 
@@ -76,6 +90,7 @@ exports.maxCount = (count) => `*Máximo ${count}*.`;
 exports.downloading = (value) => `*Descargando ${value}...*`;
 exports.making = (value) => `*Creando ${value}...*`;
 exports.searching = (value) => `*Buscando ${value}...*`;
+exports.converting = (from, to) => `*Convirtiendo de ${from} a ${to}...*`;
 exports.invalidLanguage = (lan, availableLanguages) =>
 	`Idioma *${lan}* inválido.\n\nIdiomas disponibles:\n${availableLanguages
 		.map((lan) => `*• ${lan}*`)
