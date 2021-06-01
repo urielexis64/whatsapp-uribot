@@ -19,7 +19,6 @@
 *⬇ COMANDOS DE DESCARGA ⬇*
 
 ✅ */play [query]*
-❌ */playv2 [query]* (no sirve)
 ✅ */ytmp3 [linkYt]*
 ✅ */ytmp4 [linkYt]*
 ✅ */tiktok [linkTiktok]*
@@ -44,6 +43,7 @@
 ✅ */randomCum*
 ✅ */randomFeet*
 ✅ */randomBj*
+✅ */randomGoneWild*
 ✅ */randomBoobs*
 ✅ */randomPussy*
 ✅ */randomHentai*
@@ -58,6 +58,7 @@
 ✅ */creator*
 ✅ */info*
 ✅ */changelog*
+✅ */donate*
 
 *🛠 COMANDOS EDUCATIVOS 📚*
 
@@ -74,17 +75,19 @@
 ✅ */mergepdfs*
 ❌ */wiki [query]* (no sirve)
 
-*📌 OTROS COMANDOS 📌*
+*💡 SHORTCUT COMMANDS 💡*
 
 ✅ */rp (quoted message)*
+✅ */write [text]*
+✅ */test*
+
+*📌 OTROS COMANDOS 📌*
+
+✅ */sug [suggestion]*
 ✅ */lyrics [query]*
 ✅ */igStalk [@username]*
 ✅ */randomCat*
-✅ */commands*
 ✅ */randomDog*
-✅ */write*
-✅ */cheems [text]|(quotedMessage)*
+✅ */cheems [text] | (quotedMessage)*
 ✅ */getss*
 ✅ */join [linkGroup]*
-✅ */test*
-✅ */donate*
