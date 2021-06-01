@@ -1,9 +1,9 @@
 const {Client} = require("@open-wa/wa-automate");
+const {decryptMedia} = require("@open-wa/wa-decrypt");
 const html_to_pdf = require("html-pdf-node");
 const convertapi = require("convertapi")("bnWtM4CFccvCXmmL");
 const PDFMerger = require("pdf-merger-js");
 const merger = new PDFMerger();
-const {decryptMedia} = require("@open-wa/wa-decrypt");
 const fs = require("fs");
 const request = require("request");
 const axios = require("axios");
@@ -34,13 +34,15 @@ const nsfw_ = JSON.parse(fs.readFileSync("database/group/nsfw.json"));
 const mute_ = JSON.parse(fs.readFileSync("database/bot/mute.json"));
 const welcome_ = JSON.parse(fs.readFileSync("database/group/welcome.json"));
 const stats_ = JSON.parse(fs.readFileSync("database/bot/stats.json"));
+let sugs_ = JSON.parse(fs.readFileSync("database/bot/suggestions.json"));
 // ======================== END READ DATABASE ============================ //
 
 // ================================= UTILS =================================== //
 const {en, es} = require("./text/lang");
 moment.tz.setDefault("America/Mexico").locale("mx");
 const {help, terms, info, donate, cmds} = require("../lib/help");
-const {fb, ig, ytmp3, ytmp4, play, playv2, xvid} = require("../lib/downloader");
+const {addFilter, isFiltered} = require("../lib/msgFilter");
+const {fb, ig, ytmp3, ytmp4, play, xvid} = require("../lib/downloader");
 const {cheemsify, random, songLyrics, translate} = require("../lib/functions");
 const {isBinary, isUrl} = require("../tools");
 
@@ -59,6 +61,15 @@ const stickersMetadata = {
 
 const animatedStickersConfig = {
 	crop: false,
+};
+
+const localeDateOptions = {
+	year: "numeric",
+	month: "2-digit",
+	day: "2-digit",
+	hour: "2-digit",
+	minute: "2-digit",
+	second: "2-digit",
 };
 
 const availableLanguages = [
@@ -92,9 +103,6 @@ const refreshStats = ({files, calls, groups, stickers}) => {
 // =================================== END UTILS ===================================== //
 
 let isSlept = false;
-let error = false;
-let thereIsMerge1 = false;
-let thereIsMerge2 = false;
 
 module.exports = uribot = async (client = new Client(), message) => {
 	try {
@@ -139,6 +147,8 @@ module.exports = uribot = async (client = new Client(), message) => {
 			}
 		};
 
+		//if (isFiltered(from)) return client.reply(chat.id, es.waitNextCall, id);
+		//addFilter(from);
 		refreshStats({calls: true});
 
 		const time = moment(t * 1000).format("DD/MM HH:mm:ss");
@@ -153,7 +163,8 @@ module.exports = uribot = async (client = new Client(), message) => {
 		const isBlocked = blockNumber.includes(sender.id);
 		const isNsfw = isGroupMsg ? nsfw_.includes(chat.id) : false;
 
-		const isQuotedImage = quotedMsg && quotedMsg.type === "image";
+		const isQuotedImage =
+			(quotedMsg && quotedMsg?.type === "image") || quotedMsg?.mimetype?.startsWith("image");
 		const isQuotedVideo = quotedMsg && quotedMsg.type === "video";
 		const isQuotedSticker = quotedMsg && quotedMsg.type === "sticker";
 		const isQuotedGif = quotedMsg && quotedMsg.mimetype === "image/gif";
@@ -173,6 +184,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 		const uaOverride =
 			"WhatsApp/2.2029.4 Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36" +
 			botNumber;
+
 		if (!isGroupMsg && command.startsWith("/"))
 			console.log(
 				"\x1b[1;31m~\x1b[1;37m>",
@@ -196,10 +208,27 @@ module.exports = uribot = async (client = new Client(), message) => {
 			);
 		if (isBlocked) return;
 		switch (command) {
+			case "/stt": //speech to text
+				if (isQuotedVoice) {
+					const mediaData = await decryptMedia(quotedMsg, uaOverride);
+					await fs.writeFileSync("temp/audio/stt.mp3", mediaData);
+				}
+				return;
 			// ========================================================== STICKERS SECTION ==========================================================
 			case "/sticker":
 			case "/stiker":
 				const circle = args[1] === "circle";
+				if (isQuotedImage) {
+					client.reply(chat.id, es.making("sticker"), id);
+					const mediaData = await decryptMedia(quotedMsg, uaOverride);
+					const imageBase64 = `data:${quotedMsg.mimetype};base64,${mediaData.toString(
+						"base64"
+					)}`;
+					return await client.sendImageAsSticker(chat.id, imageBase64, {
+						...stickersMetadata,
+						circle,
+					});
+				}
 				if (isMedia && type === "image") {
 					client.reply(chat.id, es.making("sticker"), id);
 					const mediaData = await decryptMedia(message, uaOverride);
@@ -288,7 +317,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 			case "/findsticker":
 				client.reply(chat.id, es.searching("sticker"), id);
 				const res = await ggl.scrape(body.slice(13), 5);
-				await client
+				return await client
 					.sendStickerfromUrl(chat.id, res[0].url, {method: "GET"}, stickersMetadata)
 					.then((res) => {
 						if (!res)
@@ -302,7 +331,6 @@ module.exports = uribot = async (client = new Client(), message) => {
 					.catch((err) => {
 						client.reply(chat.id, es.generalError(err), id);
 					});
-				break;
 			case "/unsticker":
 				if (quotedMsg) {
 					try {
@@ -326,8 +354,8 @@ module.exports = uribot = async (client = new Client(), message) => {
 				const youtubeUrl = args[1];
 				return ytmp3(youtubeUrl)
 					.then((title) => {
-						client.sendAudio(chat.id, `temp/audio/${title}.mp3`, id).then(async () => {
-							await fs.unlinkSync(`temp/audio/${title}.mp3`);
+						client.sendAudio(chat.id, `temp/audio/${title}.mp3`, id).then(() => {
+							fs.unlinkSync(`temp/audio/${title}.mp3`);
 							refreshStats({files: true});
 						});
 					})
@@ -352,20 +380,10 @@ module.exports = uribot = async (client = new Client(), message) => {
 			case "/p":
 				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
 				client.reply(chat.id, es.downloading("audio"), id);
-				return play(args[0] === "/p" ? body.slice(2) : body.slice(5))
+				return play(args[0] === "/p" ? body.slice(3) : body.slice(6))
 					.then(async (title) => {
 						await client
-							.sendFile(
-								chat.id,
-								`temp/audio/${title}.mp3`,
-								title,
-								title,
-								id,
-								null,
-								true,
-								false,
-								true
-							)
+							.sendAudio(chat.id, `temp/audio/${title}.mp3`, id)
 							.then(() => {
 								fs.unlinkSync(`temp/audio/${title}.mp3`);
 								refreshStats({files: true});
@@ -373,17 +391,6 @@ module.exports = uribot = async (client = new Client(), message) => {
 							.catch((err) => client.reply(chat.id, es.generalError(err), id));
 					})
 					.catch((err) => client.reply(chat.id, es.generalError(err), id));
-			case "/playv2":
-			case "/pv2":
-				return client.reply(chat.id, "*Comando fuera de servicio...*", id);
-				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
-				client.reply(chat.id, es.downloading("audio"), id);
-				return playv2(args[0] === "/pv2" ? body.slice(5) : body.slice(8)).then((res) => {
-					if (res.url) {
-						return client.sendAudio(chat.id, res.url, id);
-					}
-					client.reply(chat.id, es.generalError(res.message), id);
-				});
 			case "/xvid":
 				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
 				const keyword = args[1];
@@ -452,7 +459,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 				//client.sendFileFromUrl(chat.id, phUrl.download_urls["480"], "si");
 				break;
 			case "/ig":
-				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
+				if (!isUrl(args[1])) return client.reply(chat.id, es.wrongFormat, id);
 				return ig(args[1])
 					.then((posts) => {
 						posts.forEach((post) => client.sendFileFromUrl(chat.id, post));
@@ -462,18 +469,18 @@ module.exports = uribot = async (client = new Client(), message) => {
 			case "/reddit":
 				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
 				const limitreddit = body.split(".")[1] || 1;
-				if (limitreddit > 5) return client.reply(chat.id, es.maxCount(5), id);
+				if (limitreddit > 10) return client.reply(chat.id, es.maxCount(10), id);
 				error = false;
 				for (let index = 0; index < limitreddit; index++) {
 					await axios
 						.get(`https://meme-api.herokuapp.com/gimme/${args[1]}`)
 						.then(async (r) => {
 							const data = r.data;
-							await client
+							client
 								.sendFileFromUrl(chat.id, data.url, "img", es.redditPost(data), id)
 								.then(refreshStats({files: true}))
 								.catch((err) => client.reply(chat.id, es.generalError(err), id));
-							await wait(800);
+							await wait(900);
 						})
 						.catch((err) => {
 							client.reply(chat.id, es.generalError(err.response.data.message), id);
@@ -1102,6 +1109,23 @@ module.exports = uribot = async (client = new Client(), message) => {
 					client.reply(chat.id, es.generalError(error), id);
 				}
 				break;
+			case "/sug":
+				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
+				sugs_.push({
+					uid: sender.id.split("@")[0],
+					username: pushname,
+					date: new Date().toLocaleDateString("es-MX", localeDateOptions),
+					desc: body.slice(5),
+				});
+				await fs.writeFileSync("database/bot/suggestions.json", JSON.stringify(sugs_));
+				return client.reply(chat.id, es.savedSuggestion, id);
+			case "/printsugs":
+				return client.reply(chat.id, es.printSuggestions(sugs_), id);
+			case "/clearsugs":
+				if (!isOwner) return client.reply(chat.id, es.onlyBotOwner, id);
+				sugs_ = [];
+				await fs.writeFileSync("database/bot/suggestions.json", JSON.stringify(sugs_));
+				return client.reply(chat.id, es.clearedSuggestions, id);
 			case "/stats":
 				return client.sendText(chat.id, es.stats());
 			default:
