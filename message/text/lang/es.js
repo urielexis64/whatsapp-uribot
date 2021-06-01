@@ -2,6 +2,7 @@ const fs = require("fs");
 const {prefix} = require(`../../../config.json`);
 
 exports.wait = "*Espere un momento...*";
+exports.waitUntilNextCall = "*Espera 5 segundos antes de volver a llamar al bot.*";
 exports.groupOnly = `*Este comando solo puede ser usado en grupos*`;
 exports.tooLongText = "*¡El texto es demasiado largo!*";
 exports.wrongFormat = `¡Formato incorrecto! Revisa el manual de uso enviando el comando *${prefix}help*`;
@@ -32,6 +33,8 @@ exports.invalidExtension = `*Extensión inválida.*`;
 exports.translating = `*Traduciendo...*`;
 exports.mergingPDF = `*Merging PDFs...*`;
 exports.bye = "*Adiós. 👋*";
+exports.savedSuggestion = "*Sugerecia guardada. 👍*";
+exports.clearedSuggestions = "*Sugerecias eliminadas. 🗑*";
 exports.changelog = `*📌 CHANGELOG 📌*
 v1.4.0   |   CAMBIAR
 *[NEW]* /math
@@ -39,8 +42,13 @@ v1.4.0   |   CAMBIAR
 *[NEW]* /doc2pdf
 *[NEW]* /img2pdf
 *[NEW]* /mergepdfs
-*[IMPROVED]* More translated messages.
+*[NEW]* /sug
+*[ADDED]* More translated messages.
+*[IMPROVED]* igStalk now returns last posts if not private account.
+*[IMPROVED]* /ytmp3 returns a native audio instead a document file audio.
+*[REMOVED]* /pv2 (now use /play that returns a native WhatsApp audio)
 *[FIX]* Some audios not playing when using /play command.
+*[FIX]* Not showing error messages when misusing some commands.
 *[FIX]* Can't download videos/audios due to age restricted. (ytmp3, ytmp4, play)
 *[FIX]* Error when downloading videos/audios due to strange symbols on the title. (/\\:*?"<>|)
 
@@ -98,5 +106,17 @@ exports.invalidLanguage = (lan, availableLanguages) =>
 exports.redditPost = (data) =>
 	`*Title:* ${data.title}\n*Post link:* ${data.postLink}\n*Subreddit:* ${data.subreddit}\n*Up Votes:* ${data.ups}\n*Original URL:* ${data.url}`;
 exports.igProfile = (data) =>
-	`*Nombre:* ${data.name}\n\n*Biografía:*\n${data.bio}\n\n*Seguidores:*\n${data.followers}\n\n*Siguiendo:*\n${data.following}\n\n*Posts:*\n${data.posts}`;
+	`*Nombre:* ${data.name}\n\n*Biografía:*\n${data.bio}\n\n*Seguidores:*\n${data.followers}\n\n*Siguiendo:*\n${data.following}\n\n*Posts:*\n${data.posts}` +
+	!data.private
+		? `\n\nÚltimas publicaciones:\n\n${data.lastPosts}`
+		: "";
 exports.generalError = (error) => `*Error:* ${error}`;
+exports.printSuggestions = (suggs) => {
+	let suggestions = "";
+	suggs.map((sug) => {
+		suggestions += `*Sugerido por:* ${sug.username + " (" + sug.uid + ")"}\n*Fecha:* ${
+			sug.date
+		}\n*Descripción:* ${sug.desc}\n\n`;
+	});
+	return suggestions.trimEnd() || "*No hay sugerencias.* 🤔";
+};
