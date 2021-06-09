@@ -60,13 +60,17 @@ Ejemplo: /fb https://www.facebook.com/EpochTimesTrending/videos/310155606660409
 ✅ */url2img [url]*
 Regresa la imagen asociada a una URL.
 Ejemplo: /url2img https://upload.wikimedia.org/wikipedia/commons/8/8f/Example_image.svg
-✅ */xvid [term]*
 ✅ */ig [link]*
 Regresa una imagen/video de un post público de Instagram.
 Ejemplo: /ig https://www.instagram.com/p/CFqRZTlluAi/?igshid=1gtxkbdqhnbbe
-✅ */reddit [subreddit]*
+✅ */reddit [subreddit] [.count?]*
 Regresa una imagen de un subreddit específico.
-Ejemplo: /reddit catswithjobs
+Ejemplo 1: /reddit catswithjobs
+Ejemplo 2: /reddit catswithjobs .5
+✅ */redditw [subreddit] [.count?]*
+Regresa una imagen de un subreddit específico sin descripción.
+Ejemplo 1: /redditw catswithjobs
+Ejemplo 2: /redditw catswithjobs .5
 
 *🏷 COMANDOS PARA STICKERS 🏷*
 
@@ -139,6 +143,10 @@ Regresa el texto encontrado en la imagen especificada.
 ✅ */math [math expression]*
 Resuelve la expresión matemática ingresada.
 Ejemplo: /math pi * sin(45)
+✅ */randomNews [.count?]*
+Regresa noticias recientes.
+Ejemplo 1: /randomNews
+Ejemplo 2: /randomNews .5
 ✅ */wiki [query]* (no sirve)
 
 *📌 OTROS COMANDOS 📌*
@@ -161,6 +169,15 @@ Ejemplo: /write hi, I am UriBOT
 ✅ */cheems [text]|(quotedMessage)*
 Cheemsifica el texto especificado.
 Ejemplo: /cheems hola
+✅ */memeCreator [topText] | [bottomText] (image | quoted image)*
+Genera un meme dada una imagen (citada o enviada).
+Ejemplo: /memeCreator texto de arriba | texto de abajo
+✅ */randomQuote [tags?]*
+Regresa una frase aleatoria.
+Ejemplo 1: /randomQuote
+Ejemplo 2: /randomQuote love
+Ejemplo 3: /randomQuote technology|business
+Ejemplo 4: /randomQuote life,wisdom
 ✅ */getss*
 Regresa una captura de pantalla del estado actual del bot.
 ✅ */join [linkGroup]*

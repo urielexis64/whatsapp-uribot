@@ -24,9 +24,9 @@
 ✅ */tiktok [linkTiktok]*
 ✅ */fb [linkFb]*
 ✅ */url2img [url]*
-✅ */xvid [term]*
 ✅ */ig [link]*
-✅ */reddit [subreddit]*
+✅ */reddit [subreddit] [.count]*
+✅ */redditw [subreddit] [.count]*
 
 *🏷 COMANDOS PARA STICKERS 🏷*
 
@@ -73,6 +73,7 @@
 ✅ */doc2pdf (quoted doc file)*
 ✅ */img2pdf (quoted image)*
 ✅ */mergepdfs*
+✅ */randomNews [.count?]*
 ❌ */wiki [query]* (no sirve)
 
 *💡 SHORTCUT COMMANDS 💡*
@@ -91,3 +92,6 @@
 ✅ */cheems [text] | (quotedMessage)*
 ✅ */getss*
 ✅ */join [linkGroup]*
+✅ */memeCreator [topText] | [bottomText] (image | quoted image)*
+✅ */randomQuote [tags]?*
+
