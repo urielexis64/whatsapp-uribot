@@ -25,6 +25,7 @@
 		"html-pdf-node": "^1.0.7",
 		"images-scraper": "^6.3.0",
 		"instagram-url-direct": "^1.0.9",
+		"meme-maker": "^2.1.2",
 		"moment-timezone": "^0.5.31",
 		"node-fetch": "^2.6.1",
 		"node-gtts": "^2.0.2",
@@ -35,7 +36,7 @@
 		"scrape-youtube": "^2.1.8",
 		"scraper-instagram": "^1.0.17",
 		"str-to-2": "^1.0.0",
-		"tiktok-scraper": "^1.4.23",
+		"tiktok-scraper": "^1.4.25",
 		"video-url-link": "^0.1.4",
 		"ytdl-core": "^4.8.2"
 	},
