@@ -4,6 +4,7 @@ const html_to_pdf = require("html-pdf-node");
 const convertapi = require("convertapi")("bnWtM4CFccvCXmmL");
 const PDFMerger = require("pdf-merger-js");
 const merger = new PDFMerger();
+const memeMaker = require("meme-maker");
 const fs = require("fs");
 const request = require("request");
 const axios = require("axios");
@@ -30,11 +31,11 @@ const tiktok = require("tiktok-scraper");
 // ===================== END SCRAPERS ===================== //
 
 // ======================== READ DATABASE ================================ //
-const nsfw_ = JSON.parse(fs.readFileSync("database/group/nsfw.json"));
-const mute_ = JSON.parse(fs.readFileSync("database/bot/mute.json"));
-const welcome_ = JSON.parse(fs.readFileSync("database/group/welcome.json"));
-const stats_ = JSON.parse(fs.readFileSync("database/bot/stats.json"));
-let sugs_ = JSON.parse(fs.readFileSync("database/bot/suggestions.json"));
+const nsfw_ = JSON.parse(fs.readFileSync("./database/group/nsfw.json"));
+const mute_ = JSON.parse(fs.readFileSync("./database/bot/mute.json"));
+const welcome_ = JSON.parse(fs.readFileSync("./database/group/welcome.json"));
+const stats_ = JSON.parse(fs.readFileSync("./database/bot/stats.json"));
+let sugs_ = JSON.parse(fs.readFileSync("./database/bot/suggestions.json"));
 // ======================== END READ DATABASE ============================ //
 
 // ================================= UTILS =================================== //
@@ -42,9 +43,13 @@ const {en, es} = require("./text/lang");
 moment.tz.setDefault("America/Mexico").locale("mx");
 const {help, terms, info, donate, cmds} = require("../lib/help");
 const {addFilter, isFiltered} = require("../lib/msgFilter");
-const {fb, ig, ytmp3, ytmp4, play, xvid} = require("../lib/downloader");
+const {fb, ig, ytmp3, ytmp4, play} = require("../lib/downloader");
 const {cheemsify, random, songLyrics, translate} = require("../lib/functions");
 const {isBinary, isUrl} = require("../tools");
+const {ownerBot, prefix, newsapikey, authorStick, packStick} = JSON.parse(
+	fs.readFileSync("./config.json")
+);
+let {uaOverride} = JSON.parse(fs.readFileSync("./config.json"));
 
 const ocrConfig = {
 	lang: "spa+eng",
@@ -53,10 +58,9 @@ const ocrConfig = {
 };
 
 const stickersMetadata = {
-	author: "🤖 UriBOT 🤖",
-	pack: "UriBOT Stickers Pack",
+	author: authorStick,
+	pack: packStick,
 	keepScale: true,
-	discord: "urielalexis64#1678",
 };
 
 const animatedStickersConfig = {
@@ -93,12 +97,12 @@ const wait = (ms) =>
 	});
 
 const refreshStats = ({files, calls, groups, stickers}) => {
-	if (calls) stats_.totalCalls += 1;
-	if (files) stats_.filesSent += 1;
-	if (groups) stats_.groups += 1;
-	if (stickers) stats_.stickersCreated += 1;
+	if (calls) stats_.totalCalls++;
+	if (files) stats_.filesSent++;
+	if (groups) stats_.groups++;
+	if (stickers) stats_.stickersCreated++;
 
-	fs.writeFileSync("database/bot/stats.json", JSON.stringify(stats_));
+	fs.writeFileSync("./database/bot/stats.json", JSON.stringify(stats_));
 };
 // =================================== END UTILS ===================================== //
 
@@ -129,8 +133,8 @@ module.exports = uribot = async (client = new Client(), message) => {
 		const command = commands.toLowerCase().split(" ")[0] || "";
 		const args = commands.split(" ");
 		if (
-			!command.startsWith("/") ||
-			command.startsWith("/9j") ||
+			!command.startsWith(prefix) ||
+			command.startsWith(prefix + "9j") ||
 			command === "" ||
 			(mute_.includes(chat.id) && command !== "/unmute") ||
 			isSlept
@@ -156,7 +160,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 		const blockNumber = await client.getBlockedIds();
 		const groupId = isGroupMsg ? chat.groupMetadata.id : "";
 		const groupAdmins = isGroupMsg ? await client.getGroupAdmins(groupId) : "";
-		const ownerNumber = ["5216672545434@c.us"];
+		const ownerNumber = [ownerBot];
 		const isGroupAdmins = isGroupMsg ? groupAdmins.includes(sender.id) : false;
 		const isBotGroupAdmins = isGroupMsg ? groupAdmins.includes(botNumber + "@c.us") : false;
 		const isOwner = ownerNumber.includes(sender.id);
@@ -181,11 +185,9 @@ module.exports = uribot = async (client = new Client(), message) => {
 		const isVoice = type === "ptt";
 		const isGif = mimetype === "image/gif";
 
-		const uaOverride =
-			"WhatsApp/2.2029.4 Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36" +
-			botNumber;
+		uaOverride += botNumber;
 
-		if (!isGroupMsg && command.startsWith("/"))
+		if (!isGroupMsg && command.startsWith(prefix))
 			console.log(
 				"\x1b[1;31m~\x1b[1;37m>",
 				"[\x1b[1;32mEXEC\x1b[1;37m]",
@@ -195,7 +197,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 				"from",
 				color(pushname)
 			);
-		if (isGroupMsg && command.startsWith("/"))
+		if (isGroupMsg && command.startsWith(prefix))
 			console.log(
 				"\x1b[1;31m~\x1b[1;37m>",
 				"[\x1b[1;32mEXEC\x1b[1;37m]",
@@ -208,15 +210,9 @@ module.exports = uribot = async (client = new Client(), message) => {
 			);
 		if (isBlocked) return;
 		switch (command) {
-			case "/stt": //speech to text
-				if (isQuotedVoice) {
-					const mediaData = await decryptMedia(quotedMsg, uaOverride);
-					await fs.writeFileSync("temp/audio/stt.mp3", mediaData);
-				}
-				return;
 			// ========================================================== STICKERS SECTION ==========================================================
-			case "/sticker":
-			case "/stiker":
+			case prefix + "sticker":
+			case prefix + "stiker":
 				const circle = args[1] === "circle";
 				if (isQuotedImage) {
 					client.reply(chat.id, es.making("sticker"), id);
@@ -267,9 +263,9 @@ module.exports = uribot = async (client = new Client(), message) => {
 				}
 				refreshStats({stickers: true});
 				break;
-			case "/stickergif":
-			case "/stikergif":
-			case "/sgif":
+			case prefix + "stickergif":
+			case prefix + "stikergif":
+			case prefix + "sgif":
 				if (
 					(mimetype === "video/mp4" || mimetype === "image/gif") &&
 					message.duration <= 5
@@ -311,27 +307,23 @@ module.exports = uribot = async (client = new Client(), message) => {
 							stickersMetadata
 						)
 						.catch(console.log);
-				} else client.reply(chat.id, "[❗] El video/GIF debe durar máximo 5 segundos.", id);
-				refreshStats({stickers: true});
-				break;
-			case "/findsticker":
+				} else if (quotedMsgObj.duration > 5 || message.duration > 5)
+					return client.reply(chat.id, es.maxVideoSeconds, id);
+				else return client.reply(chat.id, es.wrongFormat, id);
+				return refreshStats({stickers: true});
+			case prefix + "findsticker":
 				client.reply(chat.id, es.searching("sticker"), id);
 				const res = await ggl.scrape(body.slice(13), 5);
 				return await client
 					.sendStickerfromUrl(chat.id, res[0].url, {method: "GET"}, stickersMetadata)
 					.then((res) => {
-						if (!res)
-							return client.reply(
-								chat.id,
-								es.generalError("Sticker no encontrado. Prueba con algo distinto."),
-								id
-							);
+						if (!res) return client.reply(chat.id, es.sticketNotFound, id);
 						refreshStats({stickers: true});
 					})
 					.catch((err) => {
 						client.reply(chat.id, es.generalError(err), id);
 					});
-			case "/unsticker":
+			case prefix + "unsticker":
 				if (quotedMsg) {
 					try {
 						const mediaData = await decryptMedia(quotedMsg, uaOverride);
@@ -349,7 +341,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 				break;
 			// ========================================================== END STICKERS SECTION ==========================================================
 			// ========================================================== DOWNLOADER SECTION ==========================================================
-			case "/ytmp3":
+			case prefix + "ytmp3":
 				client.reply(chat.id, es.downloading("audio"), id);
 				const youtubeUrl = args[1];
 				return ytmp3(youtubeUrl)
@@ -359,8 +351,8 @@ module.exports = uribot = async (client = new Client(), message) => {
 							refreshStats({files: true});
 						});
 					})
-					.catch((err) => client.reply(chat.id, `Ocurrió un error: ${err}`, id));
-			case "/ytmp4":
+					.catch((err) => client.reply(chat.id, es.generalError(err), id));
+			case prefix + "ytmp4":
 				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
 				client.reply(chat.id, es.downloading("video"), id);
 				const isYtUrl = isUrl(args[1]);
@@ -376,8 +368,8 @@ module.exports = uribot = async (client = new Client(), message) => {
 							.catch((err) => client.reply(chat.id, es.generalError(err), id));
 					})
 					.catch((err) => client.reply(chat.id, `Ocurrió un error: ${err}`, id));
-			case "/play":
-			case "/p":
+			case prefix + "play":
+			case prefix + "p":
 				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
 				client.reply(chat.id, es.downloading("audio"), id);
 				return play(args[0] === "/p" ? body.slice(3) : body.slice(6))
@@ -391,65 +383,57 @@ module.exports = uribot = async (client = new Client(), message) => {
 							.catch((err) => client.reply(chat.id, es.generalError(err), id));
 					})
 					.catch((err) => client.reply(chat.id, es.generalError(err), id));
-			case "/xvid":
-				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
-				const keyword = args[1];
-				return xvid(keyword).then((videoUrl) =>
-					client.sendFileFromUrl(chat.id, videoUrl, keyword, keyword, id)
-				);
-			case "/fb":
+			case prefix + "fb":
 				try {
 					if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
 					client.reply(chat.id, es.wait, id);
 					return fb(args[1]).then((res) => {
-						if (res.urlHd)
-							client
-								.sendFileFromUrl(chat.id, `${res.urlHd}`, "video.mp4", res.capt, id)
-								.catch((err) =>
-									client.reply(
-										chat.id,
-										es.generalError("No se puede extraer el video"),
-										id
-									)
-								);
-						else
-							client
-								.sendFileFromUrl(chat.id, `${res.url}`, "video.mp4", res.capt, id)
-								.catch((err) =>
-									client.reply(
-										chat.id,
-										es.generalError("No se puede extraer el video"),
-										id
-									)
-								);
+						if (res.error)
+							return client.reply(
+								chat.id,
+								es.generalError("No se puede extraer el video."),
+								id
+							);
+						if (res.hd || res.sd)
+							client.sendText(chat.id, "*Video encontrado. Descargando...*");
+						if (res.hd) client.sendFileFromUrl(chat.id, `${res.hd}`, "", res.capt, id);
+						else client.sendFileFromUrl(chat.id, `${res.sd}`, "", res.capt, id);
 						refreshStats({files: true});
 					});
 				} catch (error) {
 					client.reply(chat.id, es.generalError(error), id);
 				}
 				break;
-			case "/tiktok":
+			case prefix + "tiktok":
 				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
 				if (!args[1].includes("tiktok.com"))
 					return client.reply(chat.id, es.invalidLink, id);
 				client.reply(chat.id, es.wait, id);
 				try {
 					const videoData = await tiktok.getVideoMeta(args[1]);
-					await tiktok.video(args[1], {
-						download: true,
-						filepath: __dirname + "\\tiktok",
-					});
-					await fs.renameSync(
-						`tiktok/${videoData.collector[0].id}.mp4`,
-						`tiktok/tiktok.mp4`
-					);
-					client.sendFile(chat.id, `tiktok\\tiktok.mp4`, `tiktok\\tiktok.mp4`, null, id);
-				} catch (error) {
-					client.sendText(chat.id, `ERROR: *${error}*`);
+					await tiktok
+						.video(args[1], {download: true, filepath: "temp/video", noWaterMark: true})
+						.then(() => {
+							client
+								.sendFile(
+									chat.id,
+									`temp/video/${videoData.collector[0].id}.mp4`,
+									"",
+									videoData.collector[0].text,
+									id
+								)
+								.then(() => {
+									refreshStats({files: true});
+									fs.unlinkSync(`temp/video/${videoData.collector[0].id}.mp4`);
+								})
+								.catch(console.log);
+						})
+						.catch((err) => client.reply(chat.id, es.generalError(err), id));
+				} catch (err) {
+					client.sendText(chat.id, es.generalError(err));
 				}
-				refreshStats({files: true});
 				break;
-			case "/ph":
+			case prefix + "ph":
 				/* const res = await ph.search(args[1], null, null);
 					const phUrl = await ph.page(
 						"https://www.pornhub.com/view_video.php?viewkey=ph60abfcb33bf93",
@@ -458,7 +442,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 					console.log(phUrl); */
 				//client.sendFileFromUrl(chat.id, phUrl.download_urls["480"], "si");
 				break;
-			case "/ig":
+			case prefix + "ig":
 				if (!isUrl(args[1])) return client.reply(chat.id, es.wrongFormat, id);
 				return ig(args[1])
 					.then((posts) => {
@@ -466,7 +450,8 @@ module.exports = uribot = async (client = new Client(), message) => {
 						refreshStats({files: true});
 					})
 					.catch((err) => client.reply(chat.id, err, id));
-			case "/reddit":
+			case prefix + "reddit":
+			case prefix + "redditw":
 				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
 				const limitreddit = body.split(".")[1] || 1;
 				if (limitreddit > 10) return client.reply(chat.id, es.maxCount(10), id);
@@ -476,10 +461,28 @@ module.exports = uribot = async (client = new Client(), message) => {
 						.get(`https://meme-api.herokuapp.com/gimme/${args[1]}`)
 						.then(async (r) => {
 							const data = r.data;
-							client
-								.sendFileFromUrl(chat.id, data.url, "img", es.redditPost(data), id)
-								.then(refreshStats({files: true}))
-								.catch((err) => client.reply(chat.id, es.generalError(err), id));
+							if (command.endsWith("w")) {
+								client
+									.sendFileFromUrl(chat.id, data.url, "", "", id)
+									.then(refreshStats({files: true}))
+									.catch((err) =>
+										client.reply(chat.id, es.generalError(err), id)
+									);
+							} else {
+								client
+									.sendFileFromUrl(
+										chat.id,
+										data.url,
+										"img",
+										es.redditPost(data),
+										id
+									)
+									.then(refreshStats({files: true}))
+									.catch((err) =>
+										client.reply(chat.id, es.generalError(err), id)
+									);
+							}
+
 							await wait(900);
 						})
 						.catch((err) => {
@@ -489,7 +492,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 					if (error) break;
 				}
 				break;
-			case "/googleimg":
+			case prefix + "googleimg":
 				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
 				client.reply(chat.id, es.searching("imágenes"), id);
 				const limitImgs = body.split(".")[1];
@@ -505,35 +508,35 @@ module.exports = uribot = async (client = new Client(), message) => {
 				});
 			// ========================================================== END DOWNLOADER SECTION ==========================================================
 			// ========================================================== GROUPS SECTION ==========================================================
-			case "/mute":
+			case prefix + "mute":
 				if (!isGroupMsg) return client.reply(chat.id, es.onlyGroups, id);
 				if (!isGroupAdmins) return client.reply(chat.id, es.onlyAdmins, id);
 				mute_.push(chat.id);
-				fs.writeFileSync("database/bot/mute.json", JSON.stringify(mute_));
+				fs.writeFileSync("./database/bot/mute.json", JSON.stringify(mute_));
 				return client.reply(chat.id, es.muted, id);
-			case "/unmute":
+			case prefix + "unmute":
 				if (!isGroupMsg) return client.reply(chat.id, es.onlyGroups, id);
 				if (!isGroupAdmins) return client.reply(chat.id, es.onlyAdmins, id);
 				mute_.splice(chat.id, 1);
-				fs.writeFileSync("database/bot/mute.json", JSON.stringify(mute_));
+				fs.writeFileSync("./database/bot/mute.json", JSON.stringify(mute_));
 				return client.reply(chat.id, es.unmuted, id);
-			case "/welcome":
+			case prefix + "welcome":
 				if (!isGroupMsg) return client.reply(chat.id, es.onlyGroups, id);
 				if (!isGroupAdmins) return client.reply(chat.id, es.onlyAdmins, id);
 				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
 				if (args[1].toLowerCase() === "enable") {
 					welcome_.push(chat.id);
-					fs.writeFileSync("database/group/welcome.json", JSON.stringify(welcome_));
+					fs.writeFileSync("./database/group/welcome.json", JSON.stringify(welcome_));
 					client.reply(chat.id, es.welcomeEnabled, id);
 				} else if (args[1].toLowerCase() === "disable") {
 					welcome_.splice(chat.id, 1);
-					fs.writeFileSync("database/group/welcome.json", JSON.stringify(welcome_));
+					fs.writeFileSync("./database/group/welcome.json", JSON.stringify(welcome_));
 					client.reply(chat.id, es.welcomeDisabled, id);
 				} else {
 					client.reply(chat.id, es.wrongFormat, id);
 				}
 				break;
-			case "/linkgroup":
+			case prefix + "linkgroup":
 				if (!isBotGroupAdmins) return client.reply(chat.id, es.onlyBotAdmin, id);
 				if (isGroupMsg) {
 					const inviteLink = await client.getGroupInviteLink(groupId);
@@ -544,7 +547,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 					);
 				}
 				return client.reply(chat.id, es.onlyGroups, id);
-			case "/adminlist":
+			case prefix + "adminlist":
 				if (!isGroupMsg) return client.reply(chat.id, es.onlyGroups, id);
 				let mimin = "";
 				for (let admon of groupAdmins) {
@@ -552,12 +555,12 @@ module.exports = uribot = async (client = new Client(), message) => {
 				}
 				await client.sendTextWithMentions(chat.id, mimin);
 				break;
-			case "/ownergroup":
+			case prefix + "ownergroup":
 				if (!isGroupMsg) return client.reply(chat.id, es.onlyGroups, id);
 				const Owner_ = chat.groupMetadata.owner;
 				await client.sendTextWithMentions(chat.id, `Joto del grupo: @${Owner_}`);
 				break;
-			case "/mentionall":
+			case prefix + "mentionall":
 				if (!isGroupMsg) return client.reply(chat.id, es.onlyGroups, id);
 				if (!isGroupAdmins) return client.reply(chat.id, es.onlyAdmins, id);
 				const groupMem = await client.getGroupMembers(groupId);
@@ -569,7 +572,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 				hehe += "╚═〘 UriBOT 〙";
 				await client.sendTextWithMentions(chat.id, hehe);
 				break;
-			case "/kickall":
+			case prefix + "kickall":
 				if (!isGroupMsg) return client.reply(chat.id, es.onlyGroups, id);
 				const isGroupOwner = sender.id === chat.groupMetadata.owner;
 				if (!isGroupOwner) return client.reply(chat.id, es.onlyGroupOwner, id);
@@ -587,7 +590,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 					"¡Listo! Ya expulsé a todos los miembros del grupo.",
 					id
 				);
-			case "/add":
+			case prefix + "add":
 				const orang = args[1];
 				if (!isGroupMsg) return client.reply(chat.id, es.onlyGroups, id);
 				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
@@ -599,7 +602,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 					client.reply(chat.id, es.addContactError, id);
 				}
 				break;
-			case "/kick":
+			case prefix + "kick":
 				if (!isGroupMsg) return client.reply(chat.id, es.onlyGroups, id);
 				if (!isGroupAdmins) return client.reply(chat.id, es.onlyAdmins, id);
 				if (!isBotGroupAdmins) return client.reply(chat.id, es.onlyBotAdmin, id);
@@ -611,12 +614,12 @@ module.exports = uribot = async (client = new Client(), message) => {
 					await client.removeParticipant(groupId, mentionedJidList[i]);
 				}
 				break;
-			case "/leave":
+			case prefix + "leave":
 				if (!isOwner) return client.reply(chat.id, es.onlyBotOwner, id);
 				if (!isGroupMsg) return client.reply(chat.id, es.onlyGroups, id);
 				if (!isGroupAdmins) return client.reply(chat.id, es.onlyAdmins, id);
 				return client.sendText(chat.id, es.bye).then(client.leaveGroup(groupId));
-			case "/promote":
+			case prefix + "promote":
 				if (!isGroupMsg) return client.reply(chat.id, es.onlyGroups, id);
 				if (!isGroupAdmins) return client.reply(chat.id, es.onlyAdmins, id);
 				if (!isBotGroupAdmins) return client.reply(chat.id, es.onlyBotAdmin, id);
@@ -630,7 +633,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 					`Perintah diterima, menambahkan @${mentionedJidList[0]} sebagai admin.`
 				);
 				break;
-			case "/demote":
+			case prefix + "demote":
 				if (!isGroupMsg) return client.reply(chat.id, es.onlyGroups, id);
 				if (!isGroupAdmins) return client.reply(chat.id, es.onlyAdmins, id);
 				if (!isBotGroupAdmins) return client.reply(chat.id, es.onlyBotAdmin, id);
@@ -644,7 +647,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 					`Perintah diterima, menghapus jabatan @${mentionedJidList[0]}.`
 				);
 				break;
-			case "/join":
+			case prefix + "join":
 				if (args.length < 2) return client.reply(chat.id, es.wrongFormat, id);
 				const link = args[1];
 				const key = args[2];
@@ -661,7 +664,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 					client.reply(chat.id, es.invalidLink, id);
 				}
 				break;
-			case "/delete":
+			case prefix + "delete":
 				if (!isGroupMsg) return client.reply(chat.id, es.onlyGroups, id);
 				if (!isGroupAdmins) return client.reply(chat.id, es.onlyAdmins, id);
 				if (!quotedMsg) return client.reply(chat.id, es.wrongFormat, id);
@@ -669,23 +672,23 @@ module.exports = uribot = async (client = new Client(), message) => {
 				return client.deleteMessage(quotedMsgObj.chatId, quotedMsgObj.id, false);
 			// ========================================================== END GROUPS SECTION ==========================================================
 			// ============================================================ OWNER SECTION ============================================================
-			case "/sleep":
+			case prefix + "sleep":
 				if (!isOwner) return client.reply(chat.id, es.onlyBotOwner, id);
 				isSlept = true;
 				return setTimeout(() => {
 					isSlept = false;
 				}, args[1]);
-			case "/getss":
+			case prefix + "getss":
 				if (!isOwner) return client.reply(chat.id, es.onlyBotOwner, id);
 				const sesPic = await client.getSnapshot();
 				return client.sendFile(chat.id, sesPic, "session.png", "Screenshot", id);
-			case "/listblock":
+			case prefix + "listblock":
 				let hih = `Lista de números bloqueados\nTotal : ${blockNumber.length}\n`;
 				for (let i of blockNumber) {
 					hih += `➸ @${i.replace(/@c.us/g, "")}\n`;
 				}
 				return client.sendTextWithMentions(chat.id, hih, id);
-			case "/leaveall":
+			case prefix + "leaveall":
 				if (!isOwner) return client.reply(chat.id, es.onlyBotOwner, id);
 				const allChats = await client.getAllChatIds();
 				const allGroups = await client.getAllGroups();
@@ -697,14 +700,14 @@ module.exports = uribot = async (client = new Client(), message) => {
 					await client.leaveGroup(gclist.contact.id);
 				}
 				return client.reply(chat.id, "Succes leave all group!", id);
-			case "/clearall":
+			case prefix + "clearall":
 				if (!isOwner) return client.reply(chat.id, es.onlyBotOwner, id);
 				const allChatz = await client.getAllChats();
 				for (let dchat of allChatz) {
 					await client.deleteChat(dchat.id);
 				}
 				return client.reply(chat.id, "Succes clear all chat!", id);
-			case "/bc":
+			case prefix + "bc":
 				if (!isOwner || true) return client.reply(from, es.onlyBotOwner, id);
 				let msg = body.slice(4);
 				const chatz = await client.getAllChatIds();
@@ -716,87 +719,88 @@ module.exports = uribot = async (client = new Client(), message) => {
 				return client.reply(from, "Broadcast Success!", id);
 			// ========================================================== END OWNER SECTION ==========================================================
 			// ========================================================== NSFW SECTION ==========================================================
-			case "/nsfwmenu":
+			case prefix + "nsfwmenu":
+				if (isGroupMsg) if (!isNsfw) return client.reply(chat.id, es.nsfwStatus, id);
 				return client.reply(chat.id, es.menuNsfw, id);
-			case "/nsfw":
+			case prefix + "nsfw":
 				if (!isGroupMsg) return client.reply(chat.id, es.onlyGroups, id);
 				if (!isGroupAdmins) return client.reply(chat.id, es.onlyAdmins, id);
 				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
 				if (args[1].toLowerCase() === "enable") {
 					nsfw_.push(chat.id);
-					fs.writeFileSync("database/group/NSFW.json", JSON.stringify(nsfw_));
+					fs.writeFileSync("./database/group/NSFW.json", JSON.stringify(nsfw_));
 					client.reply(chat.id, es.nsfwEnabled, id);
 				} else if (args[1].toLowerCase() === "disable") {
 					nsfw_.splice(chat.id, 1);
-					fs.writeFileSync("database/group/NSFW.json", JSON.stringify(nsfw_));
+					fs.writeFileSync("./database/group/NSFW.json", JSON.stringify(nsfw_));
 					client.reply(chat.id, es.nsfwDisabled, id);
 				} else {
 					client.reply(chat.id, es.wrongFormat, id);
 				}
 				break;
-			case "/randomloli":
+			case prefix + "randomloli":
 				if (isGroupMsg) if (!isNsfw) return client.reply(chat.id, es.nsfwStatus, id);
 				const loli = await get.get(`http://api.nekos.fun:8080/api/lewd`).json();
 				refreshStats({files: true});
 				return client.sendFileFromUrl(chat.id, loli.image, "Loli.jpg", "Loli!", id);
-			case "/randomfeet":
+			case prefix + "randomfeet":
 				if (isGroupMsg) if (!isNsfw) return client.reply(chat.id, es.nsfwStatus, id);
 				const feet = await get.get(`http://api.nekos.fun:8080/api/feet`).json();
 				refreshStats({files: true});
 				return client.sendFileFromUrl(chat.id, feet.image, "Feet.jpg", "Feet!", id);
-			case "/randomcum":
+			case prefix + "randomcum":
 				if (isGroupMsg) if (!isNsfw) return client.reply(chat.id, es.nsfwStatus, id);
 				const cum = await get.get(`http://api.nekos.fun:8080/api/cum`).json();
 				refreshStats({files: true});
 				return client.sendFileFromUrl(chat.id, cum.image, "Cum.jpg", "Cum!", id);
-			case "/randombj":
+			case prefix + "randombj":
 				if (isGroupMsg) if (!isNsfw) return client.reply(chat.id, es.nsfwStatus, id);
 				const bj = await get.get(`http://api.nekos.fun:8080/api/blowjob`).json();
 				refreshStats({files: true});
 				return client.sendFileFromUrl(chat.id, bj.image, "Blowjob.jpg", "Blowjob!", id);
-			case "/randomhentai":
+			case prefix + "randomhentai":
 				if (isGroupMsg) if (!isNsfw) return client.reply(chat.id, es.nsfwStatus, id);
 				const hentai = await random("hentai");
 				refreshStats({files: true});
 				return client.sendFileFromUrl(chat.id, hentai, `Hentai`, "Hentai!", id);
-			case "/randomass":
+			case prefix + "randomass":
 				if (isGroupMsg) if (!isNsfw) return client.reply(chat.id, es.nsfwStatus, id);
 				const ass = await random("ass");
 				refreshStats({files: true});
 				return client.sendFileFromUrl(chat.id, ass, `Ass`, "Ass!", id);
-			case "/randompussy":
+			case prefix + "randompussy":
 				if (isGroupMsg) if (!isNsfw) return client.reply(chat.id, es.nsfwStatus, id);
 				const pussy = await random("pussy");
 				refreshStats({files: true});
 				return client.sendFileFromUrl(chat.id, pussy, `Pussy`, "Pussy!", id);
-			case "/randomanal":
+			case prefix + "randomanal":
 				if (isGroupMsg) if (!isNsfw) return client.reply(chat.id, es.nsfwStatus, id);
 				const anal = await random("anal");
 				refreshStats({files: true});
 				return client.sendFileFromUrl(chat.id, anal, `Anal`, "Anal!", id);
-			case "/randomgonewild":
+			case prefix + "randomgonewild":
 				if (isGroupMsg) if (!isNsfw) return client.reply(chat.id, es.nsfwStatus, id);
 				const gonewild = await random("gonewild");
 				refreshStats({files: true});
 				return client.sendFileFromUrl(chat.id, gonewild, `Gonewild`, "Gonewild!", id);
-			case "/random4k":
+			case prefix + "random4k":
 				if (isGroupMsg) if (!isNsfw) return client.reply(chat.id, es.nsfwStatus, id);
 				const _4k = await random("4k");
 				refreshStats({files: true});
 				return client.sendFileFromUrl(chat.id, _4k, `4k`, "4k!", id);
-			case "/randomboobs":
+			case prefix + "randomboobs":
 				if (isGroupMsg) if (!isNsfw) return client.reply(from, es.nsfwStatus, id);
 				const boobs = await random("boobs");
 				refreshStats({files: true});
 				return client.sendFileFromUrl(chat.id, boobs, `Boobs`, "Boobs!", id);
-			case "/randomtentacle":
+			case prefix + "randomtentacle":
 				if (isGroupMsg) if (!isNsfw) return client.reply(from, es.nsfwStatus, id);
 				const tentacle = await random("tentacle");
 				refreshStats({files: true});
 				return client.sendFileFromUrl(chat.id, tentacle, `Tentacles`, "Tentacles!", id);
 			// ========================================================== END NSFW SECTION ==========================================================
 			// ========================================================== 🛠 UTILS/EDUCATIONAL SECTION 📚 ==========================================================
-			case "/link2pdf":
+			case prefix + "link2pdf":
 				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
 				let options = {format: "A4"};
 				let file = {url: args[1]};
@@ -821,8 +825,8 @@ module.exports = uribot = async (client = new Client(), message) => {
 						});
 					})
 					.catch((err) => client.reply(chat.id, es.generalError(err), id));
-			case "/doc2pdf":
-			case "/img2pdf":
+			case prefix + "doc2pdf":
+			case prefix + "img2pdf":
 				if (!isQuotedDOCX && !isQuotedImage)
 					return client.reply(chat.id, es.invalidExtension, id);
 				client.reply(chat.id, es.converting(isQuotedImage ? "image" : "doc", "pdf"), id);
@@ -857,13 +861,13 @@ module.exports = uribot = async (client = new Client(), message) => {
 							});
 					})
 					.catch((err) => client.reply(chat.id, es.generalError(err), id));
-			case "/merge1":
+			case prefix + "merge1":
 				if (!isQuotedPDF) return client.reply(chat.id, es.wrongFormat, id);
 				const mergeData1 = await decryptMedia(quotedMsg, uaOverride);
 				const mergeFilename1 = `temp/archive/${sender.id}_merge1.pdf`;
 				await fs.writeFileSync(mergeFilename1, mergeData1);
 				return client.reply(chat.id, "*✅ Primera parte guardada.*", id);
-			case "/merge2":
+			case prefix + "merge2":
 				if (!isQuotedPDF) return client.reply(chat.id, es.wrongFormat, id);
 				const mergeData2 = await decryptMedia(quotedMsg, uaOverride);
 				const mergeFilename2 = `temp/archive/${sender.id}_merge2.pdf`;
@@ -873,7 +877,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 					"*✅ Segunda parte guardada.* Ahora envíe el comando */mergepdfs* para combinarlos.",
 					id
 				);
-			case "/mergepdfs":
+			case prefix + "mergepdfs":
 				const basePath = "temp/archive";
 				const merge1Exists = fs.existsSync(`${basePath}/${sender.id}_merge1.pdf`);
 				const merge2Exists = fs.existsSync(`${basePath}/${sender.id}_merge2.pdf`);
@@ -896,7 +900,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 						fs.unlinkSync(`${basePath}/${sender.id}_merge2.pdf`);
 						fs.unlinkSync(`${basePath}/${sender.id}_merged.pdf`);
 					});
-			case "/brainly":
+			case prefix + "brainly":
 				if (args.length > 1) {
 					const brainlySearch = require("../lib/brainly");
 					let query = body.slice(9);
@@ -935,14 +939,14 @@ module.exports = uribot = async (client = new Client(), message) => {
 					client.reply(chat.id, es.wrongFormat, id);
 				}
 				break;
-			case "/url2img":
+			case prefix + "url2img":
 				const _query = body.slice(9);
 				if (!isUrl(_query)) return client.reply(chat.id, es.wrongFormat, id);
 				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
 				return client
 					.sendFileFromUrl(chat.id, _query, `Image from ${_query}`, null, id)
 					.then(() => refreshStats({files: true}));
-			case "/translate":
+			case prefix + "translate":
 				if (args.length === 1 && !quotedMsg)
 					return client.reply(chat.id, es.wrongFormat, id);
 				client.reply(chat.id, es.translating, id);
@@ -964,13 +968,12 @@ module.exports = uribot = async (client = new Client(), message) => {
 					const translatedText = await translate(quotedMsg.body, targetLanguage);
 					return client.reply(chat.id, translatedText, id);
 				}
-
 				const translatedText = await translate(
 					args[2] ? body.slice(17) : body.slice(11),
 					targetLanguage
 				);
 				return client.reply(chat.id, translatedText, id);
-			case "/tts":
+			case prefix + "tts":
 				if (args.length === 1 && !quotedMsg)
 					return client.reply(chat.id, es.wrongFormat, id);
 				let dataText = body.slice(8);
@@ -1006,7 +1009,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 				}
 				refreshStats({files: true});
 				break;
-			case "/google":
+			case prefix + "google":
 				const limitSearch = body.split(".")[1];
 				if (limitSearch > 5) return client.reply(chat.id, es.maxCount(5), id);
 				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
@@ -1016,25 +1019,22 @@ module.exports = uribot = async (client = new Client(), message) => {
 					.then(async (results) => {
 						let txt = `*GOOGLE SEARCH*\n\n_*Search results for: ${query}*_`;
 						for (let i = 0; i < results.length; i++) {
-							txt += `\n\n*Title*: ${results[i].title}\n*Desc*: ${results[i].snippet}\n*Link*: ${results[i].link}\n\n`;
+							txt += es.googleFormat(results[i]);
 						}
 						await client.reply(chat.id, txt, id);
 					})
 					.catch(async (err) => {
 						await client.reply(chat.id, err, id);
 					});
-			case "/math":
+			case prefix + "math":
 				return axios
 					.get(`http://api.mathjs.org/v4/?expr=${body.slice(6).toLowerCase()}`)
 					.then((res) => {
 						client.reply(chat.id, `*Respuesta:* ${res.data}`, id);
 					})
 					.catch((err) => client.reply(chat.id, es.generalError(err), id));
-			case "/imagetotext":
-			case "/imgtotext":
-			case "/imgtotxt":
-			case "/totxt":
-			case "/totext":
+			case prefix + "imgtotext":
+			case prefix + "imgtotxt":
 				if ((isMedia && isImage) || isQuotedImage || isQuotedSticker) {
 					await client.reply(chat.id, es.wait, id);
 					const encryptMedia = isQuotedImage || isQuotedSticker ? quotedMsg : message;
@@ -1052,82 +1052,226 @@ module.exports = uribot = async (client = new Client(), message) => {
 				} else {
 					await client.reply(chat.id, es.wrongFormat, id);
 				}
-			case "/wiki":
+				break;
+			case prefix + "randomnews":
+				let numberOfNews = body.split(".")[1] || 1;
+				if (numberOfNews > 5) return client.reply(chat.id, es.maxCount(5), id);
+				return axios
+					.get("https://newsapi.org/v2/top-headlines?country=mx&apiKey=" + newsapikey)
+					.then(async (news) => {
+						const randomNumbers = [];
+						for (let i = 0; i < numberOfNews; i++) {
+							const ran = Math.floor(Math.random() * (news.data.articles.length - 1));
+							if (randomNumbers.includes(ran)) {
+								i--;
+								continue;
+							}
+							randomNumbers.push(ran);
+							const currentNew = news.data.articles[ran];
+							await client
+								.sendFileFromUrl(
+									chat.id,
+									currentNew.urlToImage,
+									"",
+									es.newsFormat(currentNew),
+									id
+								)
+								.then(refreshStats({files: true}))
+								.catch((err) => client.reply(chat.id, es.generalError(err), id));
+						}
+					})
+					.catch((err) => client.reply(chat.id, es.generalError(err), id));
+			case prefix + "wiki":
 				break;
 			// ========================================================== 🛠 END UTILS/EDUCATIONAL SECTION 📚 ==========================================================
 			// ===================================================================== HELP SECTION =====================================================================
-			case "/help":
+			case prefix + "help":
 				return client.sendText(chat.id, help());
-			case "/commands":
+			case prefix + "commands":
 				return client.sendText(chat.id, cmds());
-			case "/info":
+			case prefix + "info":
 				return client.sendLinkWithAutoPreview(
 					chat.id,
 					"https://github.com/urielexis64/whatsapp-uribot",
 					info()
 				);
-			case "/terms":
+			case prefix + "terms":
 				return client.reply(chat.id, terms(), id);
-			case "/donate":
+			case prefix + "donate":
 				return client.reply(chat.id, donate(), id);
-			case "/changelog":
+			case prefix + "changelog":
 				return client.reply(chat.id, es.changelog, id);
 			// ==================================================================== END HELP SECTION ====================================================================
-			case "/rp":
+			case prefix + "rp":
 				if (!quotedMsg) return client.reply(chat.id, es.wrongFormat, id);
 				return client.sendText(chat.id, quotedMsgObj.body);
-			case "/test":
+			case prefix + "test":
 				return client.reply(chat.id, es.online, id);
-			case "/clear":
+			case prefix + "clear":
 				return client.clearChat(chat.id);
-			case "/write":
-				return client.sendText(chat.id, `*${body.slice(6)}*`);
-			case "/lyrics":
+			case prefix + "write":
+				return client.sendText(chat.id, `*${body.slice(6).trim()}*`);
+			case prefix + "lyrics":
 				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
 				client.reply(chat.id, es.searching("letra"), id);
 				const lyrics = await songLyrics(body.slice(8));
 				return client.reply(chat.id, lyrics, id);
-			case "/creator":
+			case prefix + "creator":
 				return client.sendContact(chat.id, "5216672545434@c.us");
-			case "/cheems":
-				if (args.length === 1 && !quotedMsg) return client.reply(from);
+			case prefix + "cheems":
+				if (args.length === 1 && !quotedMsg)
+					return client.reply(chat.id, es.wrongFormat, id);
 				if (quotedMsg) {
-					return client.reply(
+					return client.sendText(
 						chat.id,
-						cheemsify(quotedMsgObj.isMedia ? quotedMsgObj.caption : quotedMsgObj.body),
-						id
+						cheemsify(quotedMsgObj.isMedia ? quotedMsgObj.caption : quotedMsgObj.body)
 					);
 				}
 				const text = body.slice(7);
-				return client.reply(chat.id, cheemsify(text), id);
-			case "/igstalk":
+				return client.sendText(chat.id, cheemsify(text));
+			case prefix + "igstalk":
+				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
+				if (args.length === 3 && !args[2].includes("."))
+					return client.reply(chat.id, es.wrongFormat, id);
 				try {
 					client.reply(chat.id, es.wait, id);
 					const data = await InstaClient.getProfile(args[1]);
-					client.sendFileFromUrl(chat.id, data.pic, "", es.igProfile(data), id);
+					let postsCount;
+					if (!data.private) {
+						postsCount = args[2].slice(1);
+						if (postsCount > 12) return client.reply(chat.id, es.maxCount(12), id);
+						if (postsCount < 1) return client.reply(chat.id, es.minCount(1), id);
+						if (!postsCount) postsCount = 3;
+					} else postsCount = 0;
+					await client.sendFileFromUrl(chat.id, data.pic, "", es.igProfile(data), id);
+					if (postsCount > data.lastPosts.length) postsCount = data.lastPosts.length;
+					for (let index = 0; index < postsCount; index++) {
+						const currentPost = data.lastPosts[index];
+						await client
+							.sendFileFromUrl(
+								chat.id,
+								currentPost.thumbnail,
+								"",
+								`*Fecha:* ${new Date(
+									currentPost.timestamp * 1000
+								).toLocaleDateString(
+									"es-Mx",
+									localeDateOptions
+								)}\n\n*Descripción:* ${
+									currentPost.caption || "_No hay descripción_"
+								}\n\n*Likes:* ${currentPost.likes}\n\n*Comentarios:* ${
+									currentPost.comments
+								}\n\n*Link:* https://www.instagram.com/p/${
+									currentPost.shortcode
+								}\n`,
+								id
+							)
+							.then(() => refreshStats({files: true}))
+							.catch((err) => client.reply(chat.id, es.generalError(err), id));
+					}
 				} catch (error) {
 					client.reply(chat.id, es.generalError(error), id);
 				}
 				break;
-			case "/sug":
+			case prefix + "sug":
 				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
+				if (message.length > 500) return client.reply(chat.id, es.tooLongText, id);
 				sugs_.push({
 					uid: sender.id.split("@")[0],
 					username: pushname,
 					date: new Date().toLocaleDateString("es-MX", localeDateOptions),
 					desc: body.slice(5),
 				});
-				await fs.writeFileSync("database/bot/suggestions.json", JSON.stringify(sugs_));
+				await fs.writeFileSync("./database/bot/suggestions.json", JSON.stringify(sugs_));
 				return client.reply(chat.id, es.savedSuggestion, id);
-			case "/printsugs":
+			case prefix + "printsugs":
+				if (!isOwner) return client.reply(chat.id, es.onlyBotOwner, id);
 				return client.reply(chat.id, es.printSuggestions(sugs_), id);
-			case "/clearsugs":
+			case prefix + "clearsugs":
 				if (!isOwner) return client.reply(chat.id, es.onlyBotOwner, id);
 				sugs_ = [];
-				await fs.writeFileSync("database/bot/suggestions.json", JSON.stringify(sugs_));
+				await fs.writeFileSync("./database/bot/suggestions.json", JSON.stringify(sugs_));
 				return client.reply(chat.id, es.clearedSuggestions, id);
-			case "/stats":
+			case prefix + "stats":
 				return client.sendText(chat.id, es.stats());
+			case prefix + "randomquote":
+				switch (args.length) {
+					case 1:
+						const quote = await axios.get("https://api.quotable.io/random");
+						return client.reply(chat.id, es.quoteFormat(quote.data), id);
+					case 2:
+						return axios
+							.get(`https://api.quotable.io/random?tags=${args[1]}`)
+							.then((response) =>
+								client.reply(chat.id, es.quoteFormat(response.data), id)
+							)
+							.catch((err) => {
+								return client.reply(
+									chat.id,
+									`${es.generalError(err.response.data.statusMessage)}\n\n${
+										es.availableQuoteTags
+									}`,
+									id
+								);
+							});
+					default:
+						return client.reply(chat.id, es.wrongFormat, id);
+				}
+			case prefix + "memecreator":
+				if (
+					args.length === 1 ||
+					(!isQuotedImage && !isMedia) ||
+					(isMedia && !message.caption.includes("|")) ||
+					(isQuotedImage && !body.includes("|")) ||
+					(isMedia && type !== "image")
+				)
+					return client.reply(chat.id, es.wrongFormat, id);
+				let allText;
+				if (!isMedia) {
+					allText = body.slice(13).split("|");
+				} else {
+					allText = message.caption.slice(13).split("|");
+				}
+				let topText = allText[0];
+				let bottomText = allText[1];
+				if (isQuotedImage || (isMedia && type === "image")) {
+					const mediaData = await decryptMedia(quotedMsg || message, uaOverride);
+					await fs.writeFileSync(`temp/image/${sender.id}.jpg`, mediaData);
+					let size =
+						topText.length > bottomText.length
+							? 90 - topText.length * 2
+							: 90 - bottomText.length * 2;
+					if (size < 40) size = 40;
+					if (topText.length > 45) {
+						const arr = topText.split(" ");
+						arr.splice(arr.length / 2 - 1, 0, "\n");
+						topText = arr.join(" ");
+					}
+					if (bottomText.length > 45) {
+						const arr = bottomText.split(" ");
+						arr.splice(arr.length / 2 - 1, 0, "\n");
+						bottomText = arr.join(" ");
+					}
+					let options = {
+						image: `temp/image/${sender.id}.jpg`,
+						outfile: `temp/image/${sender.id}.png`,
+						topText,
+						bottomText,
+						padding: 60,
+						fontSize: size,
+					};
+					memeMaker(options, function (err) {
+						if (err) return client.reply(chat.id, es.generalError(err), id);
+						client
+							.sendFile(chat.id, `temp/image/${sender.id}.png`, "", "", id)
+							.then(() => {
+								fs.unlinkSync(`temp/image/${sender.id}.png`);
+								fs.unlinkSync(`temp/image/${sender.id}.jpg`);
+								refreshStats({files: true});
+							});
+					});
+				}
+				break;
 			default:
 				client.reply(chat.id, es.invalidCommand, id);
 		}

@@ -80,13 +80,15 @@ exports.printSuggestions = (suggs) => {
 
 exports.changelog = `*📌 CHANGELOG 📌*
 
-v1.5.0   |   fecha
+v1.5.0   |   09/06/2021
 *[NEW]* /randomNews
 *[NEW]* /redditw
 *[NEW]* /randomQuote
 *[NEW]* /memeCreator
 *[REMOVED]* /xvid
 *[ADDED]* More translated messages.
+*[FIX]* Tiktok downloader not working.
+*[FIX]* Facebook downloader not working.
 *[FIX]* NSFW command not working properly.
 *[FIX]* WELCOME command not working properly.
 *[FIX]* Some grammar mistakes.
