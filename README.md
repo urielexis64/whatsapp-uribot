@@ -75,6 +75,19 @@ It will give us a callback like `SUCCESS: specified value was saved`.
 > ffmpeg -version
 ```
 
+## 🛠️ Installing GraphicsMagik
+
+-   Download graphicsmagik by clicking [this link](http://www.graphicsmagick.org/index.html/).
+-   Run the .exe file you just downloaded.
+-   Next, next, next...
+-   Run this command (replacing the graphicsmagik version you downloaded):
+
+```cmd
+> setx /m PATH "C:\Program Files\graphicsmagick-[version];%PATH%"
+```
+
+It will give us a callback like `SUCCESS: specified value was saved`.
+
 ## 🔍 Install the dependencies:
 
 Before running the below command, make sure you're in the project directory that you've just cloned.
