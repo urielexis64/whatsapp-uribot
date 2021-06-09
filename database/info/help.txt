@@ -132,6 +132,14 @@ Convierte una página web a PDF.
 Ejemplo: /link2pdf https://www.google.com/
 ✅ */doc2pdf (quoted doc message)*
 Convierte a PDF el archivo .doc citado.
+✅ */img2pdf (quoted image | image)*
+Convierte a PDF una imagen.
+✅ */merge1 (quoted pdf)*
+Pone en primer lugar el PDF citado para la posterior mezcla.
+✅ */merge2 (quoted pdf)*
+Pone en segundo lugar el PDF citado para la posterior mezcla.
+✅ */mergepdfs*
+Mezcla los dos PDFs previamente citados con merge1 y merge2.
 ✅ */brainly [query] [.count]*
 Realiza una búsqueda en brainly.
 Ejemplo 1: /brainly what is a bot
