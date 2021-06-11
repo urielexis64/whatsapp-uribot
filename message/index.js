@@ -6,8 +6,11 @@ const PDFMerger = require("pdf-merger-js");
 const merger = new PDFMerger();
 const memeMaker = require("meme-maker");
 const fs = require("fs");
+const FormData = require("form-data");
 const request = require("request");
-const axios = require("axios");
+const emoji_regex = require("emoji-regex");
+const emoji = emoji_regex();
+const axios = require("axios").default;
 const moment = require("moment-timezone");
 const get = require("got");
 const fetch = require("node-fetch");
@@ -1081,6 +1084,51 @@ module.exports = uribot = async (client = new Client(), message) => {
 						}
 					})
 					.catch((err) => client.reply(chat.id, es.generalError(err), id));
+			case prefix + "qr":
+				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
+				const color = body.split(".")[1];
+				body = body.replace(emoji, "");
+				client.reply(chat.id, es.generatingQR, id);
+				return client
+					.sendFileFromUrl(
+						chat.id,
+						`http://api.qrserver.com/v1/create-qr-code/?data=${body.slice(
+							4,
+							body.indexOf(".")
+						)}&ecc=H&margin=20&color=${color ?? "000"}&size=300x300`,
+						"",
+						"",
+						id
+					)
+					.catch((err) => client.reply(chat.id, es.generalError(err), id));
+			case prefix + "dqr":
+				if (!isQuotedImage && type !== "image")
+					return client.reply(chat.id, es.wrongFormat, id);
+				else {
+					client.reply(chat.id, es.decodingQR, id);
+					const mediaData = await decryptMedia(quotedMsg || message, uaOverride);
+					const filePath = `temp/image/${sender.id}.jpg`;
+					await fs.writeFileSync(filePath, mediaData);
+
+					const data = new FormData();
+					data.append("file", await fs.createReadStream(filePath));
+
+					const config = {
+						method: "post",
+						url: "https://api.qrserver.com/v1/read-qr-code/",
+						headers: data.getHeaders(),
+						data: data,
+					};
+					return axios(config)
+						.then(async (res) => {
+							const data = res.data[0];
+							const content = data.symbol[0].data;
+							if (content) await client.reply(chat.id, `*Contenido:* ${content}`, id);
+							else await client.reply(chat.id, es.invalidQR, id);
+							await fs.unlinkSync(filePath);
+						})
+						.catch((err) => client.reply(chat.id, es.generalError(err), id));
+				}
 			case prefix + "wiki":
 				break;
 			// ========================================================== 🛠 END UTILS/EDUCATIONAL SECTION 📚 ==========================================================
