@@ -4,6 +4,7 @@ const html_to_pdf = require("html-pdf-node");
 const convertapi = require("convertapi")("bnWtM4CFccvCXmmL");
 const PDFMerger = require("pdf-merger-js");
 const merger = new PDFMerger();
+const Pageres = require("pageres");
 const memeMaker = require("meme-maker");
 const fs = require("fs");
 const FormData = require("form-data");
@@ -68,6 +69,7 @@ const stickersMetadata = {
 
 const animatedStickersConfig = {
 	crop: false,
+	fps: 24,
 };
 
 const localeDateOptions = {
@@ -217,6 +219,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 			case prefix + "sticker":
 			case prefix + "stiker":
 				const circle = args[1] === "circle";
+				const crop = args[1] === "crop";
 				if (isQuotedImage) {
 					client.reply(chat.id, es.making("sticker"), id);
 					const mediaData = await decryptMedia(quotedMsg, uaOverride);
@@ -226,6 +229,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 					return await client.sendImageAsSticker(chat.id, imageBase64, {
 						...stickersMetadata,
 						circle,
+						keepScale: !crop,
 					});
 				}
 				if (isMedia && type === "image") {
@@ -235,6 +239,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 					await client.sendImageAsSticker(chat.id, imageBase64, {
 						...stickersMetadata,
 						circle,
+						keepScale: !crop,
 					});
 				} else if (quotedMsg && quotedMsg.type === "image") {
 					client.reply(chat.id, es.making("sticker"), id);
@@ -255,7 +260,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 								chat.id,
 								url,
 								{method: "get"},
-								{...stickersMetadata, circle}
+								{...stickersMetadata, circle, keepScale: !crop}
 							)
 							.catch((err) => console.log("Caught exception: ", err));
 					} else {
@@ -810,24 +815,41 @@ module.exports = uribot = async (client = new Client(), message) => {
 				return html_to_pdf
 					.generatePdf(file, options)
 					.then((pdfBuffer) => {
-						fs.writeFile(`temp/archive/${chat.id}_link2pdf.pdf`, pdfBuffer, (err) => {
+						fs.writeFile(`temp/archive/${sender.id}_link2pdf.pdf`, pdfBuffer, (err) => {
 							if (!err) {
 								client
 									.sendFile(
 										chat.id,
-										`temp/archive/${chat.id}_link2pdf.pdf`,
+										`temp/archive/${sender.id}_link2pdf.pdf`,
 										"by UriBOT",
 										"*by UriBot*",
 										id
 									)
 									.then(() => {
 										refreshStats({files: true});
-										fs.unlinkSync(`temp/archive/${chat.id}_link2pdf.pdf`);
+										fs.unlinkSync(`temp/archive/${sender.id}_link2pdf.pdf`);
 									});
 							}
 						});
 					})
 					.catch((err) => client.reply(chat.id, es.generalError(err), id));
+			case prefix + "link2ss":
+				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
+				if (!isUrl(args[1])) return client.reply(chat.id, es.invalidLink, id);
+				const ssPath = "temp/image";
+				const ssFilename = `${sender.id}_ss`;
+				return new Pageres({delay: 2, filename: ssFilename, crop: true})
+					.src(args[1], ["1920x1080"])
+					.dest(ssPath)
+					.run()
+					.then(async () => {
+						await client
+							.sendFile(chat.id, `${ssPath}/${ssFilename}.png`, "", "", id)
+							.then(refreshStats({files: true}));
+						await fs.unlinkSync(`${ssPath}/${ssFilename}.png`);
+					})
+					.catch((err) => client.reply(chat.id, es.generalError(err), id));
+
 			case prefix + "doc2pdf":
 			case prefix + "img2pdf":
 				if (!isQuotedDOCX && !isQuotedImage)
@@ -1085,22 +1107,31 @@ module.exports = uribot = async (client = new Client(), message) => {
 					})
 					.catch((err) => client.reply(chat.id, es.generalError(err), id));
 			case prefix + "qr":
-				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
-				const color = body.split(".")[1];
-				body = body.replace(emoji, "");
-				client.reply(chat.id, es.generatingQR, id);
-				return client
-					.sendFileFromUrl(
-						chat.id,
-						`http://api.qrserver.com/v1/create-qr-code/?data=${body.slice(
+				if (args.length === 1 && !quotedMsg)
+					return client.reply(chat.id, es.wrongFormat, id);
+				else {
+					const color = body.split("|")[1];
+					let text;
+					if (quotedMsg) text = quotedMsgObj.body || quotedMsgObj.caption;
+					else
+						text = body.slice(
 							4,
-							body.indexOf(".")
-						)}&ecc=H&margin=20&color=${color ?? "000"}&size=300x300`,
-						"",
-						"",
-						id
-					)
-					.catch((err) => client.reply(chat.id, es.generalError(err), id));
+							body.indexOf("|") === -1 ? body.length : body.indexOf("|")
+						);
+					text = text.replace(emoji, "");
+					client.reply(chat.id, es.generatingQR, id);
+					return client
+						.sendFileFromUrl(
+							chat.id,
+							`http://api.qrserver.com/v1/create-qr-code/?data=${text}&ecc=H&margin=20&color=${
+								color?.trim() ?? "000"
+							}&size=300x300`,
+							"",
+							"",
+							id
+						)
+						.catch((err) => client.reply(chat.id, es.generalError(err), id));
+				}
 			case prefix + "dqr":
 				if (!isQuotedImage && type !== "image")
 					return client.reply(chat.id, es.wrongFormat, id);
@@ -1185,7 +1216,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 					client.reply(chat.id, es.wait, id);
 					const data = await InstaClient.getProfile(args[1]);
 					let postsCount;
-					if (!data.private) {
+					if (!data.private && args.length === 3) {
 						postsCount = args[2].slice(1);
 						if (postsCount > 12) return client.reply(chat.id, es.maxCount(12), id);
 						if (postsCount < 1) return client.reply(chat.id, es.minCount(1), id);
