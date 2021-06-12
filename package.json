@@ -30,6 +30,7 @@
 		"node-fetch": "^2.6.1",
 		"node-gtts": "^2.0.2",
 		"node-tesseract-ocr": "^2.2.1",
+		"pageres": "^6.2.2",
 		"pdf-merger-js": "^3.1.0",
 		"porn-lib": "^1.4.1",
 		"request": "^2.88.2",
