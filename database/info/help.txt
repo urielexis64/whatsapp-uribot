@@ -42,9 +42,6 @@ Pone a la escucha al bot de los mensajes posteriores.
 ✅ */play [query]*
 Manda un audio con los términos especificados.
 Ejemplo: /play darude sandstorm 
-✅ */playv2 [query]*
-Manda un audio nativo de WhatsApp con los términos especificados.
-Ejemplo: /playv2 darude sandstorm 
 ✅ */ytmp3 [linkYt]*
 Regresa un archivo de audio de un video de Youtube.
 Ejemplo: /ytmp3 https://youtu.be/1me1fHG-Umo
@@ -130,6 +127,9 @@ Ejemplo: /googleImg banana .3
 ✅ */link2pdf [url]*
 Convierte una página web a PDF.
 Ejemplo: /link2pdf https://www.google.com/
+✅ */link2ss [url]*
+Hace una captura de pantalla a la página web especificada.
+Ejemplo: /link2ss https://www.google.com/
 ✅ */doc2pdf (quoted doc message)*
 Convierte a PDF el archivo .doc citado.
 ✅ */img2pdf (quoted image | image)*
@@ -155,6 +155,12 @@ Ejemplo: /math pi * sin(45)
 Regresa noticias recientes.
 Ejemplo 1: /randomNews
 Ejemplo 2: /randomNews .5
+✅ */qr [text] [|color?]*
+Genera un código qr del texto especificado.
+Ejemplo 1: /qr https://www.google.com/
+Ejemplo 2: /qr https://www.google.com/ |ff0000
+✅ */dqr (quotedImage | image)*
+Lee un código QR y regresa el contenido.
 ✅ */wiki [query]* (no sirve)
 
 *📌 OTROS COMANDOS 📌*

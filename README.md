@@ -25,6 +25,7 @@
 -   Git
 -   FFMPEG (to use _ytmp3_ and _play_ commands)
 -   Tesseract (to use _imgToTxt_ command)
+-   GraphicsMagik (to use _memecreator_ command)
 
 # Installation 🔨
 
@@ -139,6 +140,9 @@ Before running this script, first edit [this section](https://github.com/urielex
 |        ✅         |      Text to speech      |
 |        ✅         |      Image to Text       |
 |        ✅         |       Link to PDF        |
+|        ✅         | Take Webpage Screenshot  |
+|        ✅         |     Generate QR Code     |
+|        ✅         |      Decode QR Code      |
 |        ✅         |        DOC to PDF        |
 |        ✅         |       Image to PDF       |
 |        ✅         |        Merge PDFs        |

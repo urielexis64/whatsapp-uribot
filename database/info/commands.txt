@@ -66,6 +66,7 @@
 ✅ */google [query]*
 ✅ */googleImg [query] [.count]*
 ✅ */link2pdf [url]*
+✅ */link2ss [url]*
 ✅ */brainly [query] [.count]*
 ✅ */tts [country code] [text]*
 ✅ */imgToTxt (image | quoted image | quoted sticker)*
@@ -74,6 +75,8 @@
 ✅ */img2pdf (quoted image)*
 ✅ */mergepdfs*
 ✅ */randomNews [.count?]*
+✅ */qr [text] [|color?]*
+✅ */dqr (quotedImage | image)*
 ❌ */wiki [query]* (no sirve)
 
 *💡 SHORTCUT COMMANDS 💡*
