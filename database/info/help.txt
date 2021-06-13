@@ -54,6 +54,14 @@ Ejemplo: /tiktok https://www.tiktok.com/@gil_liany/video/6965393461164002561
 ✅ */fb [linkFb]*
 Regresa un video de un post público de Facebook.
 Ejemplo: /fb https://www.facebook.com/EpochTimesTrending/videos/310155606660409 
+✅ */ph [linkPh | query]*
+Sustrae información de PornHub dado un link o una búsqueda dada.
+Ejemplo 1: /ph https://www.pornhub.com/view_video.php?viewkey=ph6095990384bf9
+Ejemplo 2: /ph Minecraft Gameplay
+✅ */phdl [linkPh | query]*
+Descarga en la menor calidad posible el video que coincida con la búsqueda.
+Ejemplo 1: /phdl https://www.pornhub.com/view_video.php?viewkey=ph6095990384bf9
+Ejemplo 2: /phdl Minecraft Gameplay
 ✅ */url2img [url]*
 Regresa la imagen asociada a una URL.
 Ejemplo: /url2img https://upload.wikimedia.org/wikipedia/commons/8/8f/Example_image.svg
@@ -201,3 +209,6 @@ Ejemplo: /join https://chat.whatsapp.com/CAHTe2CrZNLBJmHVUAHhov
 Regresa el estado del robot (sirve para comprobar que esté en línea)
 ✅ */donate*
 Dona al creador del bot y obtén acceso a comandos premium.
+✅ */short [url]*
+Acorta el URL dado.
+Ejemplo: /short https://www.google.com/

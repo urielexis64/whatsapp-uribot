@@ -20,9 +20,11 @@
 
 ✅ */play [query]*
 ✅ */ytmp3 [linkYt]*
-✅ */ytmp4 [linkYt]*
+✅ */ytmp4 [linkYt | query]*
 ✅ */tiktok [linkTiktok]*
 ✅ */fb [linkFb]*
+✅ */ph [linkPh | query]*
+✅ */phdl [linkPh | query]*
 ✅ */url2img [url]*
 ✅ */ig [link]*
 ✅ */reddit [subreddit] [.count]*
@@ -97,4 +99,5 @@
 ✅ */join [linkGroup]*
 ✅ */memeCreator [topText] | [bottomText] (image | quoted image)*
 ✅ */randomQuote [tags]?*
+✅ */short [url]*
 

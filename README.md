@@ -7,8 +7,8 @@
 </p>
 
 <p align=center>
-    <a href="https://img.shields.io/badge/version-1.4.0-green">
-        <img title="version" src="https://img.shields.io/badge/version-1.4.0-green">
+    <a href="https://img.shields.io/badge/version-1.5.5-green">
+        <img title="version" src="https://img.shields.io/badge/version-1.5.5-green">
     </a>
 </p>
 
@@ -129,8 +129,7 @@ Before running this script, first edit [this section](https://github.com/urielex
 |       ✅       | Instagram Video/Image |
 |       ✅       |     Google Image      |
 |       ✅       |     Reddit Image      |
-|       ✅       |     XVideos Video     |
-|  Coming Soon   |       PH Video        |
+|       ✅       |       PH Video        |
 
 | 📚 Educational 📚 |         Feature          |
 | :---------------: | :----------------------: |
@@ -214,6 +213,7 @@ Before running this script, first edit [this section](https://github.com/urielex
 | Other |        Feature        |
 | :---: | :-------------------: |
 |  ✅   |      Get lyrics       |
+|  ✅   |    Link Shortener     |
 |  ✅   |    Cheemsify Text     |
 |  ✅   |   Create suggestion   |
 |  ✅   |   Print suggestions   |
