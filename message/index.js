@@ -47,7 +47,7 @@ const {en, es} = require("./text/lang");
 moment.tz.setDefault("America/Mexico").locale("mx");
 const {help, terms, info, donate, cmds} = require("../lib/help");
 const {addFilter, isFiltered} = require("../lib/msgFilter");
-const {fb, ig, ytmp3, ytmp4, play} = require("../lib/downloader");
+const {fb, ig, ytmp3, ytmp4, play, pornhub} = require("../lib/downloader");
 const {cheemsify, random, songLyrics, translate} = require("../lib/functions");
 const {isBinary, isUrl} = require("../tools");
 const {ownerBot, prefix, newsapikey, authorStick, packStick} = JSON.parse(
@@ -442,14 +442,32 @@ module.exports = uribot = async (client = new Client(), message) => {
 				}
 				break;
 			case prefix + "ph":
-				/* const res = await ph.search(args[1], null, null);
-					const phUrl = await ph.page(
-						"https://www.pornhub.com/view_video.php?viewkey=ph60abfcb33bf93",
-						["title", "pornstars", "download_urls"]
-					);
-					console.log(phUrl); */
-				//client.sendFileFromUrl(chat.id, phUrl.download_urls["480"], "si");
-				break;
+			case prefix + "phdl":
+				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
+				else {
+					client.reply(chat.id, es.extractingInfo, id);
+					let value;
+					if (isUrl(args[1])) value = args[1];
+					else value = body.slice(4);
+					return pornhub(value, isUrl(value)).then((res) => {
+						if (res.error) return client.reply(chat.id, es.generalError(res.error), id);
+						if (command === "/phdl") {
+							if (res.duration > 600)
+								return client.reply(chat.id, es.tooLongVideo(10), id);
+							client.sendText(chat.id, es.downloading("video"));
+							return client
+								.sendFileFromUrl(chat.id, res.urls["240P"], "", res.title, id)
+								.then(refreshStats({files: true}));
+						}
+						client.sendFileFromUrl(
+							chat.id,
+							res.thumbnail,
+							"",
+							es.pornhubFormat(res),
+							id
+						);
+					});
+				}
 			case prefix + "ig":
 				if (!isUrl(args[1])) return client.reply(chat.id, es.wrongFormat, id);
 				return ig(args[1])
@@ -836,6 +854,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 			case prefix + "link2ss":
 				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
 				if (!isUrl(args[1])) return client.reply(chat.id, es.invalidLink, id);
+				client.reply(chat.id, es.wait, id);
 				const ssPath = "temp/image";
 				const ssFilename = `${sender.id}_ss`;
 				return new Pageres({delay: 2, filename: ssFilename, crop: true})
@@ -1130,6 +1149,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 							"",
 							id
 						)
+						.then(refreshStats({files: true}))
 						.catch((err) => client.reply(chat.id, es.generalError(err), id));
 				}
 			case prefix + "dqr":
@@ -1295,6 +1315,30 @@ module.exports = uribot = async (client = new Client(), message) => {
 							});
 					default:
 						return client.reply(chat.id, es.wrongFormat, id);
+				}
+			case prefix + "short":
+				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
+				else {
+					let headers = {
+						"Content-Type": "application/json",
+						apikey: "2e90cf0d571d4305bbfa078735865a54",
+					};
+					return axios
+						.post(
+							"https://api.rebrandly.com/v1/links",
+							{
+								destination: args[1],
+							},
+							{headers}
+						)
+						.then((res) => client.reply(chat.id, res.data.shortUrl, id))
+						.catch((err) =>
+							client.reply(
+								chat.id,
+								es.generalError(err.response.data.errors[0].message),
+								id
+							)
+						);
 				}
 			case prefix + "memecreator":
 				if (

@@ -35,6 +35,8 @@ exports.invalidExtension = `*Extensión inválida.*`;
 exports.translating = `*Traduciendo...*`;
 exports.generatingQR = `*Generando código QR...*`;
 exports.decodingQR = `*Decodificando código QR...*`;
+exports.extractingInfo = `*Extrayendo información...*`;
+exports.videoFound = `*¡Video encontrado! Descargando...*`;
 exports.invalidQR = `*Código QR no encontrado.*`;
 exports.mergingPDF = `*Merging PDFs...*`;
 exports.bye = "*Adiós. 👋*";
@@ -50,6 +52,7 @@ exports.stats = () => {
 exports.maxCount = (count) => `*Máximo ${count}*.`;
 exports.minCount = (count) => `*Mínimo ${count}*.`;
 exports.downloading = (value) => `*Descargando ${value}...*`;
+exports.tooLongVideo = (max) => `*¡Video demasiado largo! Máx. ${max} min.*`;
 exports.making = (value) => `*Creando ${value}...*`;
 exports.searching = (value) => `*Buscando ${value}...*`;
 exports.converting = (from, to) => `*Convirtiendo de ${from} a ${to}...*`;
@@ -64,6 +67,15 @@ exports.googleFormat = (data) =>
 exports.newsFormat = (news) =>
 	`*Título:* ${news.title}\n*Descripción:* ${news.description}\n*Fecha:* ${news.publishedAt}\n*Contenido:* ${news.content}\n*URL:* ${news.url}`;
 exports.quoteFormat = (quote) => `*_“${quote.content}”_*\n\n${quote.author}`;
+exports.pornhubFormat = (data) => {
+	const downloadUrls = [];
+	for (const quality in data.urls) {
+		downloadUrls.push(`${quality}: ${data.urls[quality]}`);
+	}
+	return `*Title:* ${data.title}\n*Duration:* ${
+		data.duration
+	} s\n*Download URLs:*\n${downloadUrls.join("\n")}`;
+};
 exports.igProfile = (data) =>
 	`*Nombre:* ${data.name || "_No hay nombre_"}\n\n*Biografía:*\n${
 		data.bio || "_No hay biografía_"
@@ -82,6 +94,16 @@ exports.printSuggestions = (suggs) => {
 };
 
 exports.changelog = `*📌 CHANGELOG 📌*
+
+
+v1.5.5   |   12/06/2021
+*[NEW]* /qr
+*[NEW]* /dqr
+*[NEW]* /link2ss
+*[NEW]* /ph
+*[NEW]* /phdl
+*[NEW]* /short
+*[ADDED]* More translated messages.
 
 v1.5.0   |   09/06/2021
 *[NEW]* /randomNews
