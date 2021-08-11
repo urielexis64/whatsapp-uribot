@@ -48,8 +48,19 @@ moment.tz.setDefault("America/Mexico").locale("mx");
 const {help, terms, info, donate, cmds} = require("../lib/help");
 const {addFilter, isFiltered} = require("../lib/msgFilter");
 const {fb, ig, ytmp3, ytmp4, play, pornhub} = require("../lib/downloader");
-const {cheemsify, random, songLyrics, translate} = require("../lib/functions");
+const {
+	cheemsify,
+	random,
+	songLyrics,
+	translate,
+	invert,
+	blur,
+	convolution,
+	pixelate,
+	scaleToFit,
+} = require("../lib/functions");
 const {isBinary, isUrl} = require("../tools");
+
 const {ownerBot, prefix, newsapikey, authorStick, packStick} = JSON.parse(
 	fs.readFileSync("./config.json")
 );
@@ -480,7 +491,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 			case prefix + "redditw":
 				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
 				const limitreddit = body.split(".")[1] || 1;
-				if (limitreddit > 10) return client.reply(chat.id, es.maxCount(10), id);
+				if (limitreddit > 1) return client.reply(chat.id, es.maxCount(1), id);
 				error = false;
 				for (let index = 0; index < limitreddit; index++) {
 					await axios
@@ -949,7 +960,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 					const brainlySearch = require("../lib/brainly");
 					let query = body.slice(9);
 					let count = Number(query.split(".")[1]) || 2;
-					if (count > 10) return client.reply(chat.id, es.maxCount(10), id);
+					if (count > 1) return client.reply(chat.id, es.maxCount(1), id);
 					if (Number(query[query.length - 1])) {
 						query;
 					}
@@ -1180,8 +1191,37 @@ module.exports = uribot = async (client = new Client(), message) => {
 						})
 						.catch((err) => client.reply(chat.id, es.generalError(err), id));
 				}
-			case prefix + "wiki":
-				break;
+			case prefix + "invert":
+			case prefix + "blur":
+			case prefix + "convolution":
+			case prefix + "scale":
+			case prefix + "invert":
+			case prefix + "pixelate":
+				if (!isQuotedImage && type !== "image")
+					return client.reply(chat.id, es.wrongFormat, id);
+				else {
+					const mediaData = await decryptMedia(quotedMsg || message, uaOverride);
+					const filePath = `temp/image/${sender.id}.jpg`;
+					await fs.writeFileSync(filePath, mediaData);
+					let filterImage = null;
+					switch (command) {
+						case "/invert":
+							filterImage = await invert(id, filePath);
+							break;
+						case "/pixelate":
+							filterImage = await pixelate(id, filePath);
+							break;
+						case "/blur":
+							filterImage = await blur(id, filePath);
+							break;
+						case "/convolution":
+							filterImage = await convolution(id, filePath);
+							break;
+						case "/scale":
+							filterImage = await scaleToFit(id, filePath);
+					}
+					return client.sendImage(chat.id, filterImage, "", "", id);
+				}
 			// ========================================================== 🛠 END UTILS/EDUCATIONAL SECTION 📚 ==========================================================
 			// ===================================================================== HELP SECTION =====================================================================
 			case prefix + "help":
