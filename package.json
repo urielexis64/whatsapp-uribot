@@ -11,7 +11,7 @@
 	"license": "MIT",
 	"dependencies": {
 		"@justalk/pornhub-api": "^3.5.0",
-		"@open-wa/wa-automate": "^4.1.0",
+		"@open-wa/wa-automate": "^4.14.0",
 		"@open-wa/wa-decrypt": "^2.0.1",
 		"axios": "^0.21.1",
 		"brainly-scraper-v2": "^1.1.2",
@@ -26,6 +26,7 @@
 		"html-pdf-node": "^1.0.7",
 		"images-scraper": "^6.3.0",
 		"instagram-url-direct": "^1.0.9",
+		"jimp": "^0.16.1",
 		"meme-maker": "^2.1.2",
 		"moment-timezone": "^0.5.31",
 		"node-fetch": "^2.6.1",
@@ -33,13 +34,15 @@
 		"node-tesseract-ocr": "^2.2.1",
 		"pageres": "^6.2.2",
 		"pdf-merger-js": "^3.1.0",
+		"puppeteer": "^10.1.0",
 		"request": "^2.88.2",
 		"scrape-youtube": "^2.1.8",
 		"scraper-instagram": "^1.0.17",
 		"str-to-2": "^1.0.0",
 		"tiktok-scraper": "^1.4.25",
 		"video-url-link": "^0.1.4",
-		"ytdl-core": "^4.8.2"
+		"wikijs": "^6.2.1",
+		"ytdl-core": "^4.8.3"
 	},
 	"directories": {
 		"lib": "lib"
