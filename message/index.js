@@ -491,7 +491,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 			case prefix + "redditw":
 				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
 				const limitreddit = body.split(".")[1] || 1;
-				if (limitreddit > 1) return client.reply(chat.id, es.maxCount(1), id);
+				if (limitreddit > 10) return client.reply(chat.id, es.maxCount(10), id);
 				error = false;
 				for (let index = 0; index < limitreddit; index++) {
 					await axios

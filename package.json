@@ -20,7 +20,6 @@
 		"deepl-scraper": "^1.0.11",
 		"docx-pdf": "^0.0.1",
 		"emoji-regex": "^9.0.0",
-		"fluent-ffmpeg": "^2.1.2",
 		"google-it": "^1.6.2",
 		"got": "^11.7.0",
 		"html-pdf-node": "^1.0.7",
