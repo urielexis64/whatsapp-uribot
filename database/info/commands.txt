@@ -13,6 +13,7 @@
 ✅ */kickAll*
 ✅ */nsfw [enable|disable]*
 ✅ */welcome [enable|disable]*
+✅ */viewOnce [enable|disable]*
 ✅ */mute*
 ✅ */unmute*
 
@@ -100,4 +101,3 @@
 ✅ */memeCreator [topText] | [bottomText] (image | quoted image)*
 ✅ */randomQuote [tags]?*
 ✅ */short [url]*
-

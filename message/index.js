@@ -22,6 +22,7 @@ const ttsEn = gtts("en");
 const ttsJp = gtts("ja");
 const ttsAr = gtts("ar");
 const ttsEs = gtts("es");
+const ttsBr = gtts("pt-br");
 
 const ocrtess = require("node-tesseract-ocr");
 
@@ -36,6 +37,7 @@ const tiktok = require("tiktok-scraper");
 
 // ======================== READ DATABASE ================================ //
 const nsfw_ = JSON.parse(fs.readFileSync("./database/group/nsfw.json"));
+const viewOnce_ = JSON.parse(fs.readFileSync("./database/group/viewOnce.json"));
 const mute_ = JSON.parse(fs.readFileSync("./database/bot/mute.json"));
 const welcome_ = JSON.parse(fs.readFileSync("./database/group/welcome.json"));
 const stats_ = JSON.parse(fs.readFileSync("./database/bot/stats.json"));
@@ -182,6 +184,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 		const isOwner = ownerNumber.includes(sender.id);
 		const isBlocked = blockNumber.includes(sender.id);
 		const isNsfw = isGroupMsg ? nsfw_.includes(chat.id) : false;
+		const isViewOnce = isGroupMsg ? !viewOnce_.includes(chat.id) : false;
 
 		const isQuotedImage =
 			(quotedMsg && quotedMsg?.type === "image") || quotedMsg?.mimetype?.startsWith("image");
@@ -225,6 +228,10 @@ module.exports = uribot = async (client = new Client(), message) => {
 				color(formattedTitle)
 			);
 		if (isBlocked) return;
+		if (command.startsWith(prefix)) {
+			await client.react(id, "🤖");
+		}
+
 		switch (command) {
 			// ========================================================== STICKERS SECTION ==========================================================
 			case prefix + "sticker":
@@ -390,7 +397,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 			case prefix + "play":
 			case prefix + "p":
 				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
-				client.reply(chat.id, es.downloading("audio"), id);
+				await client.reply(chat.id, es.downloading("audio"), id);
 				return play(args[0] === "/p" ? body.slice(3) : body.slice(6))
 					.then(async (title) => {
 						await client
@@ -500,7 +507,19 @@ module.exports = uribot = async (client = new Client(), message) => {
 							const data = r.data;
 							if (command.endsWith("w")) {
 								client
-									.sendFileFromUrl(chat.id, data.url, "", "", id)
+									.sendFileFromUrl(
+										chat.id,
+										data.url,
+										"",
+										"",
+										id,
+										{},
+										false,
+										false,
+										false,
+										false,
+										isViewOnce
+									)
 									.then(refreshStats({files: true}))
 									.catch((err) =>
 										client.reply(chat.id, es.generalError(err), id)
@@ -512,7 +531,13 @@ module.exports = uribot = async (client = new Client(), message) => {
 										data.url,
 										"img",
 										es.redditPost(data),
-										id
+										id,
+										{},
+										false,
+										false,
+										false,
+										false,
+										isViewOnce
 									)
 									.then(refreshStats({files: true}))
 									.catch((err) =>
@@ -547,13 +572,13 @@ module.exports = uribot = async (client = new Client(), message) => {
 			// ========================================================== GROUPS SECTION ==========================================================
 			case prefix + "mute":
 				if (!isGroupMsg) return client.reply(chat.id, es.onlyGroups, id);
-				if (!isGroupAdmins) return client.reply(chat.id, es.onlyAdmins, id);
+				if (!isGroupAdmins && !isOwner) return client.reply(chat.id, es.onlyAdmins, id);
 				mute_.push(chat.id);
 				fs.writeFileSync("./database/bot/mute.json", JSON.stringify(mute_));
 				return client.reply(chat.id, es.muted, id);
 			case prefix + "unmute":
 				if (!isGroupMsg) return client.reply(chat.id, es.onlyGroups, id);
-				if (!isGroupAdmins) return client.reply(chat.id, es.onlyAdmins, id);
+				if (!isGroupAdmins && !isOwner) return client.reply(chat.id, es.onlyAdmins, id);
 				mute_.splice(chat.id, 1);
 				fs.writeFileSync("./database/bot/mute.json", JSON.stringify(mute_));
 				return client.reply(chat.id, es.unmuted, id);
@@ -756,6 +781,22 @@ module.exports = uribot = async (client = new Client(), message) => {
 				return client.reply(from, "Broadcast Success!", id);
 			// ========================================================== END OWNER SECTION ==========================================================
 			// ========================================================== NSFW SECTION ==========================================================
+			case prefix + "viewonce":
+				if (!isGroupMsg) return client.reply(chat.id, es.onlyGroups, id);
+				if (!isGroupAdmins && !isOwner) return client.reply(chat.id, es.onlyAdmins, id);
+				if (args.length === 1) return client.reply(chat.id, es.wrongFormat, id);
+				if (args[1].toLowerCase() === "disable") {
+					viewOnce_.push(chat.id);
+					fs.writeFileSync("./database/group/viewOnce.json", JSON.stringify(viewOnce_));
+					client.reply(chat.id, es.viewOnceDisabled, id);
+				} else if (args[1].toLowerCase() === "enable") {
+					viewOnce_.splice(chat.id, 1);
+					fs.writeFileSync("./database/group/viewOnce.json", JSON.stringify(viewOnce_));
+					client.reply(chat.id, es.viewOnceEnabled, id);
+				} else {
+					client.reply(chat.id, es.wrongFormat, id);
+				}
+				break;
 			case prefix + "nsfwmenu":
 				if (isGroupMsg) if (!isNsfw) return client.reply(chat.id, es.nsfwStatus, id);
 				return client.reply(chat.id, es.menuNsfw, id);
@@ -777,64 +818,210 @@ module.exports = uribot = async (client = new Client(), message) => {
 				break;
 			case prefix + "randomloli":
 				if (isGroupMsg) if (!isNsfw) return client.reply(chat.id, es.nsfwStatus, id);
-				const loli = await get.get(`http://api.nekos.fun:8080/api/lewd`).json();
+				const loli = JSON.parse((await get.get(`http://api.nekos.fun:8080/api/lewd`)).body);
 				refreshStats({files: true});
-				return client.sendFileFromUrl(chat.id, loli.image, "Loli.jpg", "Loli!", id);
+				return client.sendFileFromUrl(
+					chat.id,
+					loli.image,
+					"Loli.jpg",
+					"Loli!",
+					id,
+					{},
+					false,
+					false,
+					false,
+					false,
+					isViewOnce
+				);
 			case prefix + "randomfeet":
 				if (isGroupMsg) if (!isNsfw) return client.reply(chat.id, es.nsfwStatus, id);
-				const feet = await get.get(`http://api.nekos.fun:8080/api/feet`).json();
+				const feet = JSON.parse((await get.get(`http://api.nekos.fun:8080/api/feet`)).body);
 				refreshStats({files: true});
-				return client.sendFileFromUrl(chat.id, feet.image, "Feet.jpg", "Feet!", id);
+				return client.sendFileFromUrl(
+					chat.id,
+					feet.image,
+					"Feet.jpg",
+					"Feet!",
+					id,
+					{},
+					false,
+					false,
+					false,
+					false,
+					isViewOnce
+				);
 			case prefix + "randomcum":
 				if (isGroupMsg) if (!isNsfw) return client.reply(chat.id, es.nsfwStatus, id);
-				const cum = await get.get(`http://api.nekos.fun:8080/api/cum`).json();
+				const cum = JSON.parse((await get.get(`http://api.nekos.fun:8080/api/cum`)).body);
 				refreshStats({files: true});
-				return client.sendFileFromUrl(chat.id, cum.image, "Cum.jpg", "Cum!", id);
+				return client.sendFileFromUrl(
+					chat.id,
+					cum.image,
+					"Cum.jpg",
+					"Cum!",
+					id,
+					{},
+					false,
+					false,
+					false,
+					false,
+					isViewOnce
+				);
 			case prefix + "randombj":
 				if (isGroupMsg) if (!isNsfw) return client.reply(chat.id, es.nsfwStatus, id);
-				const bj = await get.get(`http://api.nekos.fun:8080/api/blowjob`).json();
+				const bj = JSON.parse(
+					(await get.get(`http://api.nekos.fun:8080/api/blowjob`)).body
+				);
 				refreshStats({files: true});
-				return client.sendFileFromUrl(chat.id, bj.image, "Blowjob.jpg", "Blowjob!", id);
+				return client.sendFileFromUrl(
+					chat.id,
+					bj.image,
+					"Blowjob.gif",
+					"Blowjob!",
+					id,
+					{},
+					false,
+					false,
+					false,
+					false,
+					isViewOnce
+				);
 			case prefix + "randomhentai":
 				if (isGroupMsg) if (!isNsfw) return client.reply(chat.id, es.nsfwStatus, id);
 				const hentai = await random("hentai");
 				refreshStats({files: true});
-				return client.sendFileFromUrl(chat.id, hentai, `Hentai`, "Hentai!", id);
+				return client.sendFileFromUrl(
+					chat.id,
+					hentai,
+					`Hentai`,
+					"Hentai!",
+					id,
+					{},
+					false,
+					false,
+					false,
+					false,
+					isViewOnce
+				);
 			case prefix + "randomass":
 				if (isGroupMsg) if (!isNsfw) return client.reply(chat.id, es.nsfwStatus, id);
 				const ass = await random("ass");
 				refreshStats({files: true});
-				return client.sendFileFromUrl(chat.id, ass, `Ass`, "Ass!", id);
+				return client.sendFileFromUrl(
+					chat.id,
+					ass,
+					`Ass`,
+					"Ass!",
+					id,
+					{},
+					false,
+					false,
+					false,
+					false,
+					isViewOnce
+				);
 			case prefix + "randompussy":
 				if (isGroupMsg) if (!isNsfw) return client.reply(chat.id, es.nsfwStatus, id);
 				const pussy = await random("pussy");
 				refreshStats({files: true});
-				return client.sendFileFromUrl(chat.id, pussy, `Pussy`, "Pussy!", id);
+				return client.sendFileFromUrl(
+					chat.id,
+					pussy,
+					`Pussy`,
+					"Pussy!",
+					id,
+					{},
+					false,
+					false,
+					false,
+					false,
+					isViewOnce
+				);
 			case prefix + "randomanal":
 				if (isGroupMsg) if (!isNsfw) return client.reply(chat.id, es.nsfwStatus, id);
 				const anal = await random("anal");
 				refreshStats({files: true});
-				return client.sendFileFromUrl(chat.id, anal, `Anal`, "Anal!", id);
+				return client.sendFileFromUrl(
+					chat.id,
+					anal,
+					`Anal`,
+					"Anal!",
+					id,
+					{},
+					false,
+					false,
+					false,
+					false,
+					isViewOnce
+				);
 			case prefix + "randomgonewild":
 				if (isGroupMsg) if (!isNsfw) return client.reply(chat.id, es.nsfwStatus, id);
 				const gonewild = await random("gonewild");
 				refreshStats({files: true});
-				return client.sendFileFromUrl(chat.id, gonewild, `Gonewild`, "Gonewild!", id);
+				return client.sendFileFromUrl(
+					chat.id,
+					gonewild,
+					`Gonewild`,
+					"Gonewild!",
+					id,
+					{},
+					false,
+					false,
+					false,
+					false,
+					isViewOnce
+				);
 			case prefix + "random4k":
 				if (isGroupMsg) if (!isNsfw) return client.reply(chat.id, es.nsfwStatus, id);
 				const _4k = await random("4k");
 				refreshStats({files: true});
-				return client.sendFileFromUrl(chat.id, _4k, `4k`, "4k!", id);
+				return client.sendFileFromUrl(
+					chat.id,
+					_4k,
+					`4k`,
+					"4k!",
+					id,
+					{},
+					false,
+					false,
+					false,
+					false,
+					isViewOnce
+				);
 			case prefix + "randomboobs":
 				if (isGroupMsg) if (!isNsfw) return client.reply(from, es.nsfwStatus, id);
 				const boobs = await random("boobs");
 				refreshStats({files: true});
-				return client.sendFileFromUrl(chat.id, boobs, `Boobs`, "Boobs!", id);
+				return client.sendFileFromUrl(
+					chat.id,
+					boobs,
+					`Boobs`,
+					"Boobs!",
+					id,
+					{},
+					false,
+					false,
+					false,
+					false,
+					isViewOnce
+				);
 			case prefix + "randomtentacle":
 				if (isGroupMsg) if (!isNsfw) return client.reply(from, es.nsfwStatus, id);
 				const tentacle = await random("tentacle");
 				refreshStats({files: true});
-				return client.sendFileFromUrl(chat.id, tentacle, `Tentacles`, "Tentacles!", id);
+				return client.sendFileFromUrl(
+					chat.id,
+					tentacle,
+					`Tentacles`,
+					"Tentacles!",
+					id,
+					{},
+					false,
+					false,
+					false,
+					false,
+					isViewOnce
+				);
 			// ========================================================== END NSFW SECTION ==========================================================
 			// ========================================================== 🛠 UTILS/EDUCATIONAL SECTION 📚 ==========================================================
 			case prefix + "link2pdf":
@@ -1059,6 +1246,10 @@ module.exports = uribot = async (client = new Client(), message) => {
 					ttsEs.save("temp/audio/resEs.mp3", dataText, function () {
 						client.sendPtt(chat.id, "temp/audio/resEs.mp3", id);
 					});
+				} else if (dataBhs === "br") {
+					ttsBr.save("temp/audio/resBra.mp3", dataText, function () {
+						client.sendPtt(chat.id, "temp/audio/resBra.mp3", id);
+					});
 				} else {
 					client.reply(chat.id, es.languagesData, id);
 				}
@@ -1260,6 +1451,7 @@ module.exports = uribot = async (client = new Client(), message) => {
 			case prefix + "cheems":
 				if (args.length === 1 && !quotedMsg)
 					return client.reply(chat.id, es.wrongFormat, id);
+				if (isQuotedImage) return client.reply(chat.id, es.wrongFormat, id);
 				if (quotedMsg) {
 					return client.sendText(
 						chat.id,

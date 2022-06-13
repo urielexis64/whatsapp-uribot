@@ -21,6 +21,8 @@ exports.menuNsfw =
 exports.nsfwStatus = `El modo *NSFW* no está activado en este grupo.\nActívalo con *${prefix}nsfw enable*`;
 exports.nsfwEnabled = `¡El modo NSWF se activó con éxito en este grupo!\nEnvía *${prefix}nsfwMenu* para ver qué opciones tengo para ti. 😉`;
 exports.nsfwDisabled = "*¡El modo NSFW se desactivó con éxito en este grupo!*";
+exports.viewOnceEnabled = `*¡El modo ViewOnce se activó con éxito en este grupo!*`;
+exports.viewOnceDisabled = "*¡El modo ViewOnce se desactivó con éxito en este grupo!*";
 exports.welcomeEnabled = "Modo *Welcome* activado";
 exports.welcomeDisabled = "Modo *Welcome* desactivado";
 exports.muted = "Modo *silencio* activado";
@@ -29,7 +31,7 @@ exports.addContactError = "*[❗] No se pudo agregar el contacto.*";
 exports.cantKickAdmin = "*[❗] ¡El bot no puede expulsar a un administrador!*";
 exports.isAlreadyAdmin = "*El usuario ya es administrador.*";
 exports.languagesData =
-	"Ingrese los datos del idioma: *[es]* para español, *[en]* para inglés, *[jp]* para japonés, *[ar]* para árabe y *[id]* para indonesio.";
+	"Ingrese los datos del idioma: *[es]* para español, *[en]* para inglés, *[jp]* para japonés, *[br]* para portugués (Brasil), *[ar]* para árabe y *[id]* para indonesio.";
 exports.invalidCommand = `*Comando inválido.* Envía *${prefix}help* para ver la lista de comandos disponibles.`;
 exports.invalidExtension = `*Extensión inválida.*`;
 exports.translating = `*Traduciendo...*`;
@@ -94,7 +96,12 @@ exports.printSuggestions = (suggs) => {
 };
 
 exports.changelog = `*📌 CHANGELOG 📌*
-
+v1.6.0   |   12/06/2022
+*[FIXED]* Fix error when using Youtube related commands. 
+*[NEW]* React with 🤖 to message when it is a command
+*[NEW]* /viewonce command to set NSFW media messages to be viewed only once.
+*[ADDED]* Add Portuguese (Brazil) language (pt-BR) to /tts command. 
+*[FIX]* Other minor fixes.
 
 v1.5.5   |   12/06/2021
 *[NEW]* /qr

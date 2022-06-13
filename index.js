@@ -1,9 +1,10 @@
 const {create, Client} = require("@open-wa/wa-automate");
-const welcome = require("./lib/welcome");
 const uribot = require("./message");
 const {options} = require("./tools");
 
 const start = async (client = new Client()) => {
+	await client.setPresence(false);
+
 	console.log("[SERVER] Server Started!");
 	// Force it to keep the current session
 	client.onStateChanged((state) => {
@@ -18,10 +19,6 @@ const start = async (client = new Client()) => {
 			}
 		});
 		uribot(client, message);
-	});
-
-	client.onGlobalParticipantsChanged(async (heuh) => {
-		await welcome(client, heuh);
 	});
 
 	client.onAddedToGroup((chat) => {
